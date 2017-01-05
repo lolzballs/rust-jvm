@@ -3,6 +3,7 @@ extern crate byteorder;
 mod class;
 mod constant_info;
 mod field_info;
+mod method_info;
 
 use std::env;
 use std::fs::File;
@@ -34,14 +35,6 @@ impl AttributeInfo {
             info: slice
         }
     }
-}
-
-struct MethodInfo {
-    access_flags: u16,
-    name_index: u16,
-    descriptor_index: u16,
-    attributes_count: u16,
-    attributes: Box<[AttributeInfo]>
 }
 
 fn read_bin<P: AsRef<Path>>(path: P) -> Vec<u8> {
