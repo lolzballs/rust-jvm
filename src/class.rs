@@ -1,6 +1,7 @@
 use std::io::{Cursor, Read};
 
 use super::constant_info::ConstantInfo;
+use super::field_info::FieldInfo;
 
 use byteorder::{BigEndian, ReadBytesExt};
 
@@ -17,9 +18,9 @@ pub struct Class {
     super_class: u16,
     interfaces_len: u16,
     interfaces: Box<[u16]>,
-    /*
     fields_len: u16,
     fields: Box<[FieldInfo]>,
+    /*
     methods_count: u16,
     methods: Box<[MethodInfo]>,
     attributes_count: u16,
@@ -51,6 +52,12 @@ impl Class {
         for i in 0..interfaces_len {
             interfaces.push(cur.read_u16::<BigEndian>().unwrap());
         }
+
+        let fields_len = cur.read_u16::<BigEndian>().unwrap();
+        let mut fields = Vec::with_capacity(interfaces_len as usize);
+        for i in 0..fields_len {
+            fields.push(FieldInfo::new(&mut cur));
+        }
         Class {
             minor_version: minor_version,
             major_version: major_version,
@@ -60,7 +67,9 @@ impl Class {
             this_class: this_class,
             super_class: super_class,
             interfaces_len: interfaces_len,
-            interfaces: interfaces.into_boxed_slice()
+            interfaces: interfaces.into_boxed_slice(),
+            fields_len: fields_len,
+            fields: fields.into_boxed_slice()
         }
     }
 }
