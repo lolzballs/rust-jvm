@@ -1,9 +1,6 @@
 use std::io::{Cursor, Read};
 
-use super::constant_info::ConstantInfo;
-use super::field_info::FieldInfo;
-use super::method_info::MethodInfo;
-use super::attribute_info::AttributeInfo;
+use info::{Attribute, Constant, Field, Method};
 
 use byteorder::{BigEndian, ReadBytesExt};
 
@@ -14,18 +11,18 @@ pub struct Class {
     minor_version: u16,
     major_version: u16,
     constant_pool_count: u16,
-    constant_pool: Box<[ConstantInfo]>,
+    constant_pool: Box<[Constant]>,
     access_flags: u16,
     this_class: u16,
     super_class: u16,
     interfaces_count: u16,
     interfaces: Box<[u16]>,
     fields_count: u16,
-    fields: Box<[FieldInfo]>,
+    fields: Box<[Field]>,
     methods_count: u16,
-    methods: Box<[MethodInfo]>,
+    methods: Box<[Method]>,
     attributes_count: u16,
-    attributes: Box<[AttributeInfo]>
+    attributes: Box<[Attribute]>
 }
 
 impl Class {
@@ -39,7 +36,7 @@ impl Class {
         let constant_pool_count = cur.read_u16::<BigEndian>().unwrap();
         let mut constant_pool = Vec::with_capacity((constant_pool_count - 1) as usize);
         for i in 1..constant_pool_count {
-            constant_pool.push(ConstantInfo::new(&mut cur));
+            constant_pool.push(Constant::new(&mut cur));
         }
         let constant_pool = constant_pool.into_boxed_slice();
 
@@ -56,19 +53,19 @@ impl Class {
         let fields_count = cur.read_u16::<BigEndian>().unwrap();
         let mut fields = Vec::with_capacity(interfaces_count as usize);
         for i in 0..fields_count {
-            fields.push(FieldInfo::new(&constant_pool, &mut cur));
+            fields.push(Field::new(&constant_pool, &mut cur));
         }
 
         let methods_count = cur.read_u16::<BigEndian>().unwrap();
         let mut methods = Vec::with_capacity(methods_count as usize);
         for i in 0..methods_count {
-            methods.push(MethodInfo::new(&constant_pool, &mut cur));
+            methods.push(Method::new(&constant_pool, &mut cur));
         }
 
         let attributes_count = cur.read_u16::<BigEndian>().unwrap();
         let mut attributes = Vec::with_capacity(attributes_count as usize);
         for i in 0..attributes_count {
-            attributes.push(AttributeInfo::new(&constant_pool, &mut cur));
+            attributes.push(Attribute::new(&constant_pool, &mut cur));
         }
         Class {
             minor_version: minor_version,

@@ -1,10 +1,7 @@
 extern crate byteorder;
 
+mod info;
 mod class;
-mod constant_info;
-mod field_info;
-mod method_info;
-mod attribute_info;
 
 use std::env;
 use std::fs::File;
@@ -23,9 +20,9 @@ fn read_bin<P: AsRef<Path>>(path: P) -> Vec<u8> {
 fn main() {
     let class_file = env::args().nth(1).unwrap();
 
-    let class_bin = read_bin(class_file);
+    let class_bin = read_bin(&class_file);
     
     let class = class::Class::new(class_bin);
-    println!("Class: {:#?}", class);
+    println!("{}: {:#?}", class_file, class);
 }
 

@@ -1,11 +1,11 @@
 use std::io::{Cursor, Read};
 
-use super::constant_info::ConstantInfo;
+use super::Constant;
 
 use byteorder::{BigEndian, ReadBytesExt};
 
 #[derive(Debug)]
-pub struct ExceptionHandler {
+struct ExceptionHandler {
     start_pc: u16,
     end_pc: u16,
     handler_pc: u16,
@@ -13,7 +13,7 @@ pub struct ExceptionHandler {
 }
 
 #[derive(Debug)]
-pub enum AttributeInfo {
+pub enum Attribute {
     ConstantValue {
         value_index: u16
     },
@@ -26,7 +26,7 @@ pub enum AttributeInfo {
         exception_table_length: u16,
         exception_table: Box<[ExceptionHandler]>,
         attributes_count: u16,
-        attributes: Box<[AttributeInfo]>
+        attributes: Box<[Attribute]>
     },
     Unknown {
         name_index: u16,
@@ -35,14 +35,14 @@ pub enum AttributeInfo {
     }
 }
 
-impl AttributeInfo {
-    pub fn new(constant_pool: &Box<[ConstantInfo]>,
-               cur: &mut Cursor<Vec<u8>>) -> AttributeInfo {
+impl Attribute {
+    pub fn new(constant_pool: &Box<[Constant]>,
+               cur: &mut Cursor<Vec<u8>>) -> Attribute {
         let name_index = cur.read_u16::<BigEndian>().unwrap() - 1; // 1-indexed
         let length = cur.read_u32::<BigEndian>().unwrap();
 
         let name = match constant_pool[name_index as usize] {
-            ConstantInfo::Utf8 { length, ref value } => {
+            Constant::Utf8 { length, ref value } => {
                 value
             },
             _ => {
@@ -52,7 +52,7 @@ impl AttributeInfo {
 
         match name.as_ref() {
             "ConstantValue" => {
-                AttributeInfo::ConstantValue {
+                Attribute::ConstantValue {
                     value_index: cur.read_u16::<BigEndian>().unwrap()
                 }
             },
@@ -79,9 +79,9 @@ impl AttributeInfo {
                 let attributes_count = cur.read_u16::<BigEndian>().unwrap();
                 let mut attributes = Vec::with_capacity(attributes_count as usize);
                 for i in 0..attributes_count {
-                    attributes.push(AttributeInfo::new(constant_pool, cur));
+                    attributes.push(Attribute::new(constant_pool, cur));
                 }
-                AttributeInfo::Code {
+                Attribute::Code {
                     length: length,
                     max_stack: max_stack,
                     max_locals: max_locals,
@@ -99,7 +99,7 @@ impl AttributeInfo {
                 let mut slice = bytes.into_boxed_slice();
                 cur.read_exact(&mut slice);
 
-                AttributeInfo::Unknown {
+                Attribute::Unknown {
                     name_index: name_index,
                     length: length,
                     info: slice

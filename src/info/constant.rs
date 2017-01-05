@@ -3,7 +3,7 @@ use std::io::{Cursor, Read};
 use byteorder::{BigEndian, ReadBytesExt};
 
 #[derive(Debug)]
-pub enum ConstantInfo {
+pub enum Constant {
     Class { name_index: u16 },
     Fieldref { class_index: u16, name_and_type_index: u16 },
     Methodref { class_index: u16, name_and_type_index: u16 },
@@ -17,60 +17,60 @@ pub enum ConstantInfo {
     Utf8 { length: u16, value: String }
 }
 
-impl ConstantInfo {
-    pub fn new(cur: &mut Cursor<Vec<u8>>) -> ConstantInfo {
+impl Constant {
+    pub fn new(cur: &mut Cursor<Vec<u8>>) -> Constant {
         let tag = cur.read_u8().unwrap();
         match tag {
             7 => {
-                ConstantInfo::Class {
+                Constant::Class {
                     name_index: cur.read_u16::<BigEndian>().unwrap()
                 }
             },
             9 => {
-                ConstantInfo::Fieldref {
+                Constant::Fieldref {
                     class_index: cur.read_u16::<BigEndian>().unwrap(),
                     name_and_type_index: cur.read_u16::<BigEndian>().unwrap()
                 }
             },
             10 => {
-                ConstantInfo::Methodref {
+                Constant::Methodref {
                     class_index: cur.read_u16::<BigEndian>().unwrap(),
                     name_and_type_index: cur.read_u16::<BigEndian>().unwrap()
                 }
             },
             11 => {
-                ConstantInfo::InterfaceMethodref {
+                Constant::InterfaceMethodref {
                     class_index: cur.read_u16::<BigEndian>().unwrap(),
                     name_and_type_index: cur.read_u16::<BigEndian>().unwrap()
                 }
             },
             8 => {
-                ConstantInfo::String {
+                Constant::String {
                     string_index: cur.read_u16::<BigEndian>().unwrap()
                 }
             },
             3 => {
-                ConstantInfo::Integer {
+                Constant::Integer {
                     value: cur.read_i32::<BigEndian>().unwrap()
                 }
             },
             4 => {
-                ConstantInfo::Float {
+                Constant::Float {
                     value: cur.read_f32::<BigEndian>().unwrap()
                 }
             },
             5 => {
-                ConstantInfo::Long {
+                Constant::Long {
                     value: cur.read_i64::<BigEndian>().unwrap()
                 }
             },
             6 => {
-                ConstantInfo::Double {
+                Constant::Double {
                     value: cur.read_f64::<BigEndian>().unwrap()
                 }
             },
             12 => {
-                ConstantInfo::NameAndType {
+                Constant::NameAndType {
                     name_index: cur.read_u16::<BigEndian>().unwrap(),
                     descriptor_index: cur.read_u16::<BigEndian>().unwrap()
                 }
@@ -81,7 +81,7 @@ impl ConstantInfo {
                 let mut slice = bytes.into_boxed_slice();
                 cur.read_exact(&mut slice);
                 let bytes = slice.into_vec();
-                ConstantInfo::Utf8 {
+                Constant::Utf8 {
                     length: length,
                     value: String::from_utf8(bytes).unwrap()
                 }
