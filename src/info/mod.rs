@@ -1,7 +1,7 @@
-mod attribute;
-mod constant;
-mod field;
-mod method;
+pub mod attribute;
+pub mod constant;
+pub mod field;
+pub mod method;
 
 pub use self::attribute::Attribute;
 pub use self::constant::Constant;

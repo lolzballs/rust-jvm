@@ -5,7 +5,7 @@ use super::Constant;
 use byteorder::{BigEndian, ReadBytesExt};
 
 #[derive(Debug)]
-struct ExceptionHandler {
+pub struct ExceptionHandler {
     start_pc: u16,
     end_pc: u16,
     handler_pc: u16,
@@ -67,7 +67,7 @@ impl Attribute {
 
                 let exception_table_length = cur.read_u16::<BigEndian>().unwrap();
                 let mut exception_table = Vec::with_capacity(exception_table_length as usize);
-                for i in 0..exception_table_length {
+                for _ in 0..exception_table_length {
                     exception_table.push(ExceptionHandler{
                         start_pc: cur.read_u16::<BigEndian>().unwrap(),
                         end_pc: cur.read_u16::<BigEndian>().unwrap(),
@@ -78,7 +78,7 @@ impl Attribute {
 
                 let attributes_count = cur.read_u16::<BigEndian>().unwrap();
                 let mut attributes = Vec::with_capacity(attributes_count as usize);
-                for i in 0..attributes_count {
+                for _ in 0..attributes_count {
                     attributes.push(Attribute::new(constant_pool, cur));
                 }
                 Attribute::Code {

@@ -1,4 +1,4 @@
-use std::io::{Cursor, Read};
+use std::io::Cursor;
 
 use super::{Attribute, Constant};
 
@@ -22,7 +22,7 @@ impl Field {
 
         let attributes_count = cur.read_u16::<BigEndian>().unwrap();
         let mut attributes = Vec::with_capacity(attributes_count as usize);
-        for i in 0..attributes_count {
+        for _ in 0..attributes_count {
             attributes.push(Attribute::new(constant_pool, cur));
         }
 

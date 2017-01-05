@@ -5,10 +5,8 @@ mod class;
 
 use std::env;
 use std::fs::File;
-use std::io::{Cursor, Read};
+use std::io::Read;
 use std::path::Path;
-
-use byteorder::{BigEndian, ReadBytesExt};
 
 fn read_bin<P: AsRef<Path>>(path: P) -> Vec<u8> {
     let mut file = File::open(path).unwrap();
@@ -24,5 +22,7 @@ fn main() {
     
     let class = class::Class::new(class_bin);
     println!("{}: {:#?}", class_file, class);
+
+    
 }
 

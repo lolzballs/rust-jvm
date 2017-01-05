@@ -1,4 +1,4 @@
-use std::io::{Cursor, Read};
+use std::io::Cursor;
 
 use info::{Attribute, Constant, Field, Method};
 
@@ -35,7 +35,7 @@ impl Class {
         
         let constant_pool_count = cur.read_u16::<BigEndian>().unwrap();
         let mut constant_pool = Vec::with_capacity((constant_pool_count - 1) as usize);
-        for i in 1..constant_pool_count {
+        for _ in 1..constant_pool_count {
             constant_pool.push(Constant::new(&mut cur));
         }
         let constant_pool = constant_pool.into_boxed_slice();
@@ -46,25 +46,25 @@ impl Class {
 
         let interfaces_count = cur.read_u16::<BigEndian>().unwrap();
         let mut interfaces = Vec::with_capacity(interfaces_count as usize);
-        for i in 0..interfaces_count {
+        for _ in 0..interfaces_count {
             interfaces.push(cur.read_u16::<BigEndian>().unwrap());
         }
 
         let fields_count = cur.read_u16::<BigEndian>().unwrap();
         let mut fields = Vec::with_capacity(interfaces_count as usize);
-        for i in 0..fields_count {
+        for _ in 0..fields_count {
             fields.push(Field::new(&constant_pool, &mut cur));
         }
 
         let methods_count = cur.read_u16::<BigEndian>().unwrap();
         let mut methods = Vec::with_capacity(methods_count as usize);
-        for i in 0..methods_count {
+        for _ in 0..methods_count {
             methods.push(Method::new(&constant_pool, &mut cur));
         }
 
         let attributes_count = cur.read_u16::<BigEndian>().unwrap();
         let mut attributes = Vec::with_capacity(attributes_count as usize);
-        for i in 0..attributes_count {
+        for _ in 0..attributes_count {
             attributes.push(Attribute::new(&constant_pool, &mut cur));
         }
         Class {
