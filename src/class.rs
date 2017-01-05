@@ -40,9 +40,9 @@ impl Class {
         let constant_pool_count = cur.read_u16::<BigEndian>().unwrap();
         let mut constant_pool = Vec::with_capacity((constant_pool_count - 1) as usize);
         for i in 1..constant_pool_count {
-            let tag = cur.read_u8().unwrap();
-            constant_pool.push(ConstantInfo::new(tag, &mut cur));
+            constant_pool.push(ConstantInfo::new(&mut cur));
         }
+        let constant_pool = constant_pool.into_boxed_slice();
 
         let access_flags = cur.read_u16::<BigEndian>().unwrap();
         let this_class = cur.read_u16::<BigEndian>().unwrap();
@@ -57,19 +57,19 @@ impl Class {
         let fields_count = cur.read_u16::<BigEndian>().unwrap();
         let mut fields = Vec::with_capacity(interfaces_count as usize);
         for i in 0..fields_count {
-            fields.push(FieldInfo::new(&mut cur));
+            fields.push(FieldInfo::new(&constant_pool, &mut cur));
         }
 
         let methods_count = cur.read_u16::<BigEndian>().unwrap();
         let mut methods = Vec::with_capacity(methods_count as usize);
         for i in 0..methods_count {
-            methods.push(MethodInfo::new(&mut cur));
+            methods.push(MethodInfo::new(&constant_pool, &mut cur));
         }
         Class {
             minor_version: minor_version,
             major_version: major_version,
             constant_pool_count: constant_pool_count,
-            constant_pool: constant_pool.into_boxed_slice(),
+            constant_pool: constant_pool,
             access_flags: access_flags,
             this_class: this_class,
             super_class: super_class,

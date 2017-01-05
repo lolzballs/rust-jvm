@@ -1,6 +1,7 @@
 use std::io::{Cursor, Read};
 
-use super::AttributeInfo;
+use super::attribute_info::AttributeInfo;
+use super::constant_info::ConstantInfo;
 
 use byteorder::{BigEndian, ReadBytesExt};
 
@@ -14,7 +15,8 @@ pub struct MethodInfo {
 }
 
 impl MethodInfo {
-    pub fn new(cur: &mut Cursor<Vec<u8>>) -> MethodInfo {
+    pub fn new(constant_pool: &Box<[ConstantInfo]>, 
+               cur: &mut Cursor<Vec<u8>>) -> MethodInfo {
         let access_flags = cur.read_u16::<BigEndian>().unwrap();
         let name_index = cur.read_u16::<BigEndian>().unwrap();
         let descriptor_index = cur.read_u16::<BigEndian>().unwrap();
@@ -22,7 +24,7 @@ impl MethodInfo {
         let attributes_count = cur.read_u16::<BigEndian>().unwrap();
         let mut attributes = Vec::with_capacity(attributes_count as usize);
         for i in 0..attributes_count {
-            attributes.push(AttributeInfo::new(cur));
+            attributes.push(AttributeInfo::new(constant_pool, cur));
         }
 
         MethodInfo {

@@ -18,7 +18,8 @@ pub enum ConstantInfo {
 }
 
 impl ConstantInfo {
-    pub fn new(tag: u8, cur: &mut Cursor<Vec<u8>>) -> ConstantInfo {
+    pub fn new(cur: &mut Cursor<Vec<u8>>) -> ConstantInfo {
+        let tag = cur.read_u8().unwrap();
         match tag {
             7 => {
                 ConstantInfo::Class {
