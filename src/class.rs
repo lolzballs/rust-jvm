@@ -3,6 +3,7 @@ use std::io::{Cursor, Read};
 use super::constant_info::ConstantInfo;
 use super::field_info::FieldInfo;
 use super::method_info::MethodInfo;
+use super::attribute_info::AttributeInfo;
 
 use byteorder::{BigEndian, ReadBytesExt};
 
@@ -23,10 +24,8 @@ pub struct Class {
     fields: Box<[FieldInfo]>,
     methods_count: u16,
     methods: Box<[MethodInfo]>,
-    /*
     attributes_count: u16,
     attributes: Box<[AttributeInfo]>
-    */
 }
 
 impl Class {
@@ -65,6 +64,12 @@ impl Class {
         for i in 0..methods_count {
             methods.push(MethodInfo::new(&constant_pool, &mut cur));
         }
+
+        let attributes_count = cur.read_u16::<BigEndian>().unwrap();
+        let mut attributes = Vec::with_capacity(attributes_count as usize);
+        for i in 0..attributes_count {
+            attributes.push(AttributeInfo::new(&constant_pool, &mut cur));
+        }
         Class {
             minor_version: minor_version,
             major_version: major_version,
@@ -78,9 +83,10 @@ impl Class {
             fields_count: fields_count,
             fields: fields.into_boxed_slice(),
             methods_count: methods_count,
-            methods: methods.into_boxed_slice()
+            methods: methods.into_boxed_slice(),
+            attributes_count: attributes_count,
+            attributes: attributes.into_boxed_slice()
         }
     }
 }
-
 
