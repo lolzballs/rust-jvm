@@ -117,7 +117,7 @@ impl ConstantPool {
                 let ty = sig::Type::new(&descriptor);
                 symref::Field {
                     class: class,
-                    sig: sig::Field::new(name, ty)
+                    sig: sig::Field::new(name, ty.unwrap())
                 }
             },
             _ => {
