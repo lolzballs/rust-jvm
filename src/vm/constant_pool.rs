@@ -68,7 +68,6 @@ impl ConstantPool {
         match *info {
             Constant::Class { name_index } => {
                 let name = Self::force_string(&constant_pool[(name_index - 1) as usize]);
-                println!("Class name: {}", name);
                 symref::Class {
                     sig: sig::Class::new(&name)
                 }
