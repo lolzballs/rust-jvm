@@ -75,7 +75,11 @@ impl Class {
         
         // TODO: Clinit
     }
-    
+
+    pub fn get_constant_pool(&self) -> &ConstantPool {
+        &self.constant_pool
+    }
+
     pub fn find_method(&self, method_symref: &symref::Method) -> &Method {
         self.methods.get(&method_symref.sig).unwrap()
     }
@@ -109,6 +113,13 @@ impl Method {
             access_flags: info.access_flags,
             code: method_code
         }
+    }
+    
+    pub fn invoke(&self, class: &Class) {
+        let frame = super::frame::Frame::new(class,
+                                             &*self.code.code,
+                                             vec![None; self.code.max_locals as usize]);
+        frame.run();
     }
 }
 

@@ -1,6 +1,7 @@
 pub mod constant_pool;
 pub mod sig;
 pub mod class;
+pub mod frame;
 
 pub mod symref {
     use super::sig;

@@ -1,3 +1,5 @@
+use std::ops::Index;
+
 use super::Value;
 use super::symref;
 use super::sig;
@@ -16,6 +18,14 @@ pub enum ConstantPoolEntry {
 #[derive(Debug)]
 pub struct ConstantPool {
     entries: Vec<Option<ConstantPoolEntry>>
+}
+
+impl Index<u16> for ConstantPool {
+    type Output = Option<ConstantPoolEntry>;
+
+    fn index(&self, index: u16) -> &Self::Output {
+        &self.entries[(index - 1) as usize]
+    }
 }
 
 impl ConstantPool {

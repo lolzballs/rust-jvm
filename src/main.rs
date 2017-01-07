@@ -44,6 +44,8 @@ fn main() {
         sig: main_sig
     };
 
-    println!("{:#?}", class.find_method(&main_symref));
+    let method = class.find_method(&main_symref);
+    println!("{:#?}", method);
+    method.invoke(&class);
 }
 
