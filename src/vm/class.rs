@@ -43,12 +43,12 @@ impl Class {
             let name = constant_pool.lookup_utf8(method_info.name_index);
             let descriptor = constant_pool.lookup_utf8(method_info.descriptor_index);
             let sig = sig::Method::new(name.clone(), descriptor.clone());
-            let method = Method {
-                symref: symref::Method {
+            let method = Method::new(
+                symref::Method {
                     class: symref.clone(),
                     sig: sig.clone()
-                }
-            };
+                },
+                method_info);
 
             methods.insert(sig, method);
         }
@@ -67,8 +67,32 @@ impl Class {
 #[derive(Debug)]
 pub struct Method {
     pub symref: symref::Method,
-//    pub access_flags: u16,
-//    pub code: MethodCode
+    pub access_flags: u16,
+    code: MethodCode
+}
+
+impl Method {
+    pub fn new(symref: symref::Method, info: &model::info::Method) -> Self {
+        let method_code = info.attributes.iter().fold(None, |code, attr| {
+            code.or(
+                match *attr {
+                    model::info::Attribute::Code { max_locals, ref code, .. } => {
+                        Some(MethodCode {
+                            max_locals: max_locals,
+                            code: code.clone()
+                        })
+                    },
+                    _ => None
+                }
+                )
+            }).unwrap();
+
+        Method {
+            symref: symref,
+            access_flags: info.access_flags,
+            code: method_code
+        }
+    }
 }
 
 #[derive(Debug)]

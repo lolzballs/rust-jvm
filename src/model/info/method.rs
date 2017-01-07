@@ -23,7 +23,7 @@ pub struct Method {
     pub name_index: u16,
     pub descriptor_index: u16,
     attributes_count: u16,
-    attributes: Box<[Attribute]>
+    pub attributes: Box<[Attribute]>
 }
 
 impl Method {
