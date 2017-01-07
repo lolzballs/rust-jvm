@@ -26,12 +26,14 @@ pub mod symref {
 
 pub use self::constant_pool::ConstantPool;
 
-#[derive(Debug)]
+use std::cell::RefCell;
+use std::rc::Rc;
+#[derive(Clone, Debug)]
 pub enum Value {
     Int(i32),
     Float(f32),
     Long(i64),
     Double(f64),
-    Reference(Box<class::Class>)
+    Reference(Rc<RefCell<class::Class>>)
 }
 

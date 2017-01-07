@@ -26,7 +26,9 @@ fn main() {
     let constant_pool = vm::constant_pool::ConstantPool::new(&class.constant_pool);
     let class_sig = vm::sig::Class::new("Test");
     let class_symref = vm::symref::Class { sig: class_sig };
+    let class = vm::class::Class::new(class_symref, None, constant_pool, class);
+    class.initialize();
 
-    println!("{:#?}", vm::class::Class::new(class_symref, None, constant_pool, class));
+    println!("{:#?}", class);
 }
 

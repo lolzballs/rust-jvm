@@ -5,6 +5,7 @@ use super::ConstantPool;
 use super::Value;
 
 use std::collections::HashMap;
+use std::cell::RefCell;
 
 #[derive(Debug)]
 pub struct Class {
@@ -14,7 +15,7 @@ pub struct Class {
     constant_pool: ConstantPool,
     methods: HashMap<sig::Method, Method>,
     field_constants: HashMap<sig::Field, u16>,
-    field_values: Option<HashMap<sig::Field, Value>>
+    field_values: RefCell<Option<HashMap<sig::Field, Value>>>
 }
 
 impl Class {
@@ -59,8 +60,18 @@ impl Class {
             constant_pool: constant_pool,
             methods: methods,
             field_constants: field_constants,
-            field_values: None
+            field_values: RefCell::new(None)
         }
+    }
+
+    pub fn initialize(&self) {
+        let mut field_values = HashMap::new();
+        for (sig, index) in &self.field_constants {
+            let value = self.constant_pool.resolve_literal(*index);
+            field_values.insert(sig.clone(), value.clone());
+        }
+
+        *self.field_values.borrow_mut() = Some(field_values);
     }
 }
 
