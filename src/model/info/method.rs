@@ -19,9 +19,9 @@ const ACC_SYNTHETIC: u16 = 0x1000;
 
 #[derive(Debug)]
 pub struct Method {
-    access_flags: u16,
-    name_index: u16,
-    descriptor_index: u16,
+    pub access_flags: u16,
+    pub name_index: u16,
+    pub descriptor_index: u16,
     attributes_count: u16,
     attributes: Box<[Attribute]>
 }

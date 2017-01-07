@@ -14,7 +14,8 @@ pub enum Constant {
     Long { value: i64 },
     Double { value: f64 },
     NameAndType { name_index: u16, descriptor_index: u16 },
-    Utf8 { length: u16, value: String }
+    Utf8 { length: u16, value: String },
+    Nothing
 }
 
 impl Constant {

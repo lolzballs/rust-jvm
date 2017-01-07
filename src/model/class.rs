@@ -1,6 +1,6 @@
 use std::io::Cursor;
 
-use info::{Attribute, Constant, Field, Method};
+use super::info::{Attribute, Constant, Field, Method};
 
 use byteorder::{BigEndian, ReadBytesExt};
 
@@ -8,21 +8,21 @@ const MAGIC_VALUE: u32 = 0xCAFEBABE;
 
 #[derive(Debug)]
 pub struct Class {
-    minor_version: u16,
-    major_version: u16,
-    constant_pool_count: u16,
-    constant_pool: Box<[Constant]>,
-    access_flags: u16,
-    this_class: u16,
-    super_class: u16,
-    interfaces_count: u16,
-    interfaces: Box<[u16]>,
-    fields_count: u16,
-    fields: Box<[Field]>,
-    methods_count: u16,
-    methods: Box<[Method]>,
-    attributes_count: u16,
-    attributes: Box<[Attribute]>
+    pub minor_version: u16,
+    pub major_version: u16,
+    pub constant_pool_count: u16,
+    pub constant_pool: Box<[Constant]>,
+    pub access_flags: u16,
+    pub this_class: u16,
+    pub super_class: u16,
+    pub interfaces_count: u16,
+    pub interfaces: Box<[u16]>,
+    pub fields_count: u16,
+    pub fields: Box<[Field]>,
+    pub methods_count: u16,
+    pub methods: Box<[Method]>,
+    pub attributes_count: u16,
+    pub attributes: Box<[Attribute]>
 }
 
 impl Class {
@@ -35,8 +35,18 @@ impl Class {
         
         let constant_pool_count = cur.read_u16::<BigEndian>().unwrap();
         let mut constant_pool = Vec::with_capacity((constant_pool_count - 1) as usize);
-        for _ in 1..constant_pool_count {
-            constant_pool.push(Constant::new(&mut cur));
+        let mut i = 1;
+        while i < constant_pool_count {
+            let constant = Constant::new(&mut cur);
+            match constant {
+                Constant::Long { .. } | Constant::Double { .. } => {
+                    i += 1; // Longs and Doubles take up two slots...
+                    constant_pool.push(constant);
+                    constant_pool.push(Constant::Nothing);
+                },
+                _ => constant_pool.push(constant)
+            };
+            i += 1;
         }
         let constant_pool = constant_pool.into_boxed_slice();
 

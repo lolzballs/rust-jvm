@@ -6,9 +6,9 @@ use byteorder::{BigEndian, ReadBytesExt};
 
 #[derive(Debug)]
 pub struct Field {
-    access_flags: u16,
-    name_index: u16,
-    descriptor_index: u16,
+    pub access_flags: u16,
+    pub name_index: u16,
+    pub descriptor_index: u16,
     attributes_count: u16,
     attributes: Box<[Attribute]>
 }
@@ -32,6 +32,17 @@ impl Field {
             descriptor_index: descriptor_index,
             attributes_count: attributes_count,
             attributes: attributes.into_boxed_slice()
+        }
+    }
+
+    pub fn get_attribute_constantvalue(&self, index: u16) -> u16 {
+        match self.attributes[index as usize] {
+            Attribute::ConstantValue { value_index } => {
+                value_index
+            },
+            _ => {
+                panic!("Attribute {} is not a ConstantValue", index);
+            }
         }
     }
 }
