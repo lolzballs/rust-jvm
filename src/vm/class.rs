@@ -72,6 +72,12 @@ impl Class {
         }
 
         *self.field_values.borrow_mut() = Some(field_values);
+        
+        // TODO: Clinit
+    }
+    
+    pub fn find_method(&self, method_symref: &symref::Method) -> &Method {
+        self.methods.get(&method_symref.sig).unwrap()
     }
 }
 

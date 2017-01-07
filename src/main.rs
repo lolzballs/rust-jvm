@@ -26,9 +26,24 @@ fn main() {
     let constant_pool = vm::constant_pool::ConstantPool::new(&class.constant_pool);
     let class_sig = vm::sig::Class::new("Test");
     let class_symref = vm::symref::Class { sig: class_sig };
-    let class = vm::class::Class::new(class_symref, None, constant_pool, class);
+    let class = vm::class::Class::new(class_symref.clone(), None, constant_pool, class);
     class.initialize();
 
-    println!("{:#?}", class);
+    use vm::sig;
+    use vm::symref;
+    let string_ty =
+        sig::Type::Reference(sig::Class::Scalar(String::from("java/lang/String")));
+    let string_array_ty = sig::Type::Reference(sig::Class::Array(Box::new(string_ty)));
+    let main_sig = sig::Method {
+        name: String::from("main"),
+        params: vec![string_array_ty],
+        return_type: None
+    };
+    let main_symref = symref::Method {
+        class: class_symref,
+        sig: main_sig
+    };
+
+    println!("{:#?}", class.find_method(&main_symref));
 }
 
