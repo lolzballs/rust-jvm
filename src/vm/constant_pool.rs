@@ -53,7 +53,7 @@ impl ConstantPool {
                     None
                 }
                 _ => {
-                    panic!("Unknown {:#?}", constant);
+                    panic!("Unimplemented constant: {:#?}", constant);
                 }
             };
             entries.push(entry);
@@ -147,6 +147,17 @@ impl ConstantPool {
             },
             _ => {
                 panic!("Constant {:?} must be Constant::NameAndType", info);
+            }
+        }
+    }
+
+    pub fn lookup_utf8(&self, index: u16) -> &String {
+        match self.entries[(index - 1) as usize] {
+            Some(ConstantPoolEntry::StringValue(ref string)) => {
+                string
+            },
+            _ => {
+                panic!("Item at index {} must be ConstantPoolEntry::StringValue", index);
             }
         }
     }

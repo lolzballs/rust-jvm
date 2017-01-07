@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub enum Type {
     Char,
     Byte,
@@ -17,7 +17,7 @@ impl Type {
     }
 
     fn new_partial(type_str: &str) -> (Option<Self>, usize) {
-        let (specifier, rem) = type_str.split_at(1);
+        let (specifier, mut rem) = type_str.split_at(1);
         match specifier {
             "C" => (Some(Type::Char), 1),
             "B" => (Some(Type::Byte), 1),
@@ -35,26 +35,36 @@ impl Type {
             "V" => {
                 (None, 1)
             },
+            "[" => {
+                let (ty, len) = Self::new_partial(rem);
+                let array_type = Type::Reference(Class::Array(Box::new(ty.unwrap())));
+                rem = rem.split_at(len).1;
+                (Some(array_type), len + 1)
+            }
             _ => {
                 panic!("Unknown type: {}", type_str);
             }
         }
     }
 }
-#[derive(Debug)]
-pub struct Class {
-    name: String
+
+#[derive(Clone, Hash, PartialEq, Eq, Debug)]
+pub enum Class {
+    Scalar(String),
+    Array(Box<Type>)
 }
 
 impl Class {
     pub fn new(name: &str) -> Self {
-        Class {
-            name: String::from(name)
+        if name.starts_with('[') {
+            Class::Array(Box::new(Type::new(name.split_at(1).1).unwrap()))
+        } else {
+            Class::Scalar(String::from(name))
         }
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub struct Method {
     pub name: String,
     pub params: Vec<Type>,
@@ -96,7 +106,7 @@ impl Method {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub struct Field {
     name: String,
     ty: Type

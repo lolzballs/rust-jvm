@@ -6,18 +6,18 @@ pub mod class;
 pub mod symref {
     use super::sig;
 
-    #[derive(Debug)]
+    #[derive(Clone, Debug)]
     pub struct Class {
         pub sig: sig::Class
     }
 
-    #[derive(Debug)]
+    #[derive(Clone, Debug)]
     pub struct Method {
         pub class: Class,
         pub sig: sig::Method
     }
 
-    #[derive(Debug)]
+    #[derive(Clone, Debug)]
     pub struct Field {
         pub class: Class,
         pub sig: sig::Field
