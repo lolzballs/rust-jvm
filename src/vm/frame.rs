@@ -63,9 +63,14 @@ impl<'a> Frame<'a> {
                     self.operand_stack.push(local);
                 },
                 0x60 => { // iadd
-                    let val1 = pop!(Value::Int);
                     let val2 = pop!(Value::Int);
+                    let val1 = pop!(Value::Int);
                     self.operand_stack.push(Value::Int(val1 + val2));
+                },
+                0x64 => { // isub
+                    let val2 = pop!(Value::Int);
+                    let val1 = pop!(Value::Int);
+                    self.operand_stack.push(Value::Int(val1 - val2));
                 },
                 0xB8 => { // invokestatic
                     let index = self.read_u16();

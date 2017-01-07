@@ -29,6 +29,7 @@ impl Class {
             let ty = sig::Type::new(
                 constant_pool.lookup_utf8(field_info.descriptor_index)).unwrap();
             let sig = sig::Field::new(name.clone(), ty);
+            // If the field is static, add to field_constants
             if field_info.access_flags & model::info::field::ACC_STATIC != 0 {
                 for attr in field_info.attributes.iter() {
                     if let model::info::Attribute::ConstantValue { value_index }
@@ -65,12 +66,12 @@ impl Class {
     }
 
     pub fn initialize(&self) {
+        // Initialize all the field_values
         let mut field_values = HashMap::new();
         for (sig, index) in &self.field_constants {
             let value = self.constant_pool.resolve_literal(*index);
             field_values.insert(sig.clone(), value.clone());
         }
-
         *self.field_values.borrow_mut() = Some(field_values);
         
         // TODO: Clinit

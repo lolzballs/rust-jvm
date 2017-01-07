@@ -45,7 +45,6 @@ fn main() {
     };
 
     let method = class.find_method(&main_symref);
-    println!("{:#?}", method);
     method.invoke(&class);
 }
 
