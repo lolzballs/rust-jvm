@@ -43,13 +43,4 @@ impl Field {
             attributes: attributes.into_boxed_slice(),
         }
     }
-
-    pub fn get_attribute_constantvalue(&self, index: u16) -> u16 {
-        match self.attributes[index as usize] {
-            Attribute::ConstantValue { value_index } => value_index,
-            _ => {
-                panic!("Attribute {} is not a ConstantValue", index);
-            }
-        }
-    }
 }
