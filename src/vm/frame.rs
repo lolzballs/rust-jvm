@@ -85,11 +85,11 @@ impl<'a> Frame<'a> {
                 opcode::DCONST_1 => push!(Value::Double(1.0)),
                 opcode::BIPUSH => {
                     let byte = self.read_u8();
-                    push!(Value::Int(byte as i32));
+                    push!(Value::Int((byte as i8) as i32));
                 }
                 opcode::SIPUSH => {
                     let short = self.read_u16();
-                    push!(Value::Int(short as i32));
+                    push!(Value::Int((short as i16) as i32));
                 }
                 opcode::LDC => {
                     let index = self.read_u8();
