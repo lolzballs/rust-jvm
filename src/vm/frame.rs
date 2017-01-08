@@ -90,6 +90,7 @@ impl<'a> Frame<'a> {
                     return None
                 },
                 _ => {
+                    println!("{:#?}", self);
                     panic!("Unknown instruction at pc {}", self.pc); 
                 }
             }
