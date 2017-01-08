@@ -1,8 +1,10 @@
 use std::ops::Index;
+use std::num::Wrapping;
 
 use super::Value;
 use super::symref;
 use super::sig;
+
 use model::info::Constant;
 
 #[derive(Debug)]
@@ -45,8 +47,12 @@ impl ConstantPool {
                     let symref = Self::force_field_ref(constant_pool, constant);
                     Some(ConstantPoolEntry::FieldRef(symref))
                 }
-                Constant::Integer { value } => Some(ConstantPoolEntry::Literal(Value::Int(value))),
-                Constant::Long { value } => Some(ConstantPoolEntry::Literal(Value::Long(value))),
+                Constant::Integer { value } => {
+                    Some(ConstantPoolEntry::Literal(Value::Int(Wrapping(value))))
+                }
+                Constant::Long { value } => {
+                    Some(ConstantPoolEntry::Literal(Value::Long(Wrapping(value))))
+                }
                 Constant::NameAndType { .. } => None,
                 Constant::Utf8 { .. } => {
                     let symref = Self::force_string(constant);

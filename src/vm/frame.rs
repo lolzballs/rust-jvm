@@ -3,6 +3,8 @@ use super::constant_pool::ConstantPoolEntry;
 use super::opcode;
 use super::Value;
 
+use std::num::Wrapping;
+
 #[derive(Debug)]
 pub struct Frame<'a> {
     class: &'a Class,
@@ -69,15 +71,15 @@ impl<'a> Frame<'a> {
             match self.read_u8() {
                 opcode::NOP => (),
                 // opcode::ACONST_NULL => push!(Value::NullReference),
-                opcode::ICONST_M1 => push!(Value::Int(-1)),
-                opcode::ICONST_0 => push!(Value::Int(0)),
-                opcode::ICONST_1 => push!(Value::Int(1)),
-                opcode::ICONST_2 => push!(Value::Int(2)),
-                opcode::ICONST_3 => push!(Value::Int(3)),
-                opcode::ICONST_4 => push!(Value::Int(4)),
-                opcode::ICONST_5 => push!(Value::Int(5)),
-                opcode::LCONST_0 => push!(Value::Long(0)),
-                opcode::LCONST_1 => push!(Value::Long(1)),
+                opcode::ICONST_M1 => push!(Value::Int(Wrapping(-1))),
+                opcode::ICONST_0 => push!(Value::Int(Wrapping(0))),
+                opcode::ICONST_1 => push!(Value::Int(Wrapping(1))),
+                opcode::ICONST_2 => push!(Value::Int(Wrapping(2))),
+                opcode::ICONST_3 => push!(Value::Int(Wrapping(3))),
+                opcode::ICONST_4 => push!(Value::Int(Wrapping(4))),
+                opcode::ICONST_5 => push!(Value::Int(Wrapping(5))),
+                opcode::LCONST_0 => push!(Value::Long(Wrapping(0))),
+                opcode::LCONST_1 => push!(Value::Long(Wrapping(1))),
                 opcode::FCONST_0 => push!(Value::Float(0.0)),
                 opcode::FCONST_1 => push!(Value::Float(1.0)),
                 opcode::FCONST_2 => push!(Value::Float(2.0)),
@@ -85,11 +87,11 @@ impl<'a> Frame<'a> {
                 opcode::DCONST_1 => push!(Value::Double(1.0)),
                 opcode::BIPUSH => {
                     let byte = self.read_u8();
-                    push!(Value::Int((byte as i8) as i32));
+                    push!(Value::Int(Wrapping((byte as i8) as i32)));
                 }
                 opcode::SIPUSH => {
                     let short = self.read_u16();
-                    push!(Value::Int((short as i16) as i32));
+                    push!(Value::Int(Wrapping((short as i16) as i32)));
                 }
                 opcode::LDC => {
                     let index = self.read_u8();
