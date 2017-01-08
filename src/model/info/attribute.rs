@@ -9,14 +9,12 @@ pub struct ExceptionHandler {
     start_pc: u16,
     end_pc: u16,
     handler_pc: u16,
-    catch_type: u16
+    catch_type: u16,
 }
 
 #[derive(Debug)]
 pub enum Attribute {
-    ConstantValue {
-        value_index: u16
-    },
+    ConstantValue { value_index: u16 },
     Code {
         length: u32,
         max_stack: u16,
@@ -26,25 +24,22 @@ pub enum Attribute {
         exception_table_length: u16,
         exception_table: Box<[ExceptionHandler]>,
         attributes_count: u16,
-        attributes: Box<[Attribute]>
+        attributes: Box<[Attribute]>,
     },
     Unknown {
         name_index: u16,
         length: u32,
-        info: Box<[u8]>
-    }
+        info: Box<[u8]>,
+    },
 }
 
 impl Attribute {
-    pub fn new(constant_pool: &Box<[Constant]>,
-               cur: &mut Cursor<Vec<u8>>) -> Attribute {
+    pub fn new(constant_pool: &Box<[Constant]>, cur: &mut Cursor<Vec<u8>>) -> Attribute {
         let name_index = cur.read_u16::<BigEndian>().unwrap() - 1; // 1-indexed
         let length = cur.read_u32::<BigEndian>().unwrap();
 
         let name = match constant_pool[name_index as usize] {
-            Constant::Utf8 { length, ref value } => {
-                value
-            },
+            Constant::Utf8 { length, ref value } => value,
             _ => {
                 panic!("Attribute name_index({}) must point to Utf8", name_index);
             }
@@ -52,10 +47,8 @@ impl Attribute {
 
         match name.as_ref() {
             "ConstantValue" => {
-                Attribute::ConstantValue {
-                    value_index: cur.read_u16::<BigEndian>().unwrap()
-                }
-            },
+                Attribute::ConstantValue { value_index: cur.read_u16::<BigEndian>().unwrap() }
+            }
             "Code" => {
                 let max_stack = cur.read_u16::<BigEndian>().unwrap();
                 let max_locals = cur.read_u16::<BigEndian>().unwrap();
@@ -68,11 +61,11 @@ impl Attribute {
                 let exception_table_length = cur.read_u16::<BigEndian>().unwrap();
                 let mut exception_table = Vec::with_capacity(exception_table_length as usize);
                 for _ in 0..exception_table_length {
-                    exception_table.push(ExceptionHandler{
+                    exception_table.push(ExceptionHandler {
                         start_pc: cur.read_u16::<BigEndian>().unwrap(),
                         end_pc: cur.read_u16::<BigEndian>().unwrap(),
                         handler_pc: cur.read_u16::<BigEndian>().unwrap(),
-                        catch_type: cur.read_u16::<BigEndian>().unwrap()
+                        catch_type: cur.read_u16::<BigEndian>().unwrap(),
                     });
                 }
 
@@ -90,9 +83,9 @@ impl Attribute {
                     exception_table_length: exception_table_length,
                     exception_table: exception_table.into_boxed_slice(),
                     attributes_count: attributes_count,
-                    attributes: attributes.into_boxed_slice()
+                    attributes: attributes.into_boxed_slice(),
                 }
-            },
+            }
             _ => {
                 println!("Unknown attribute {}", name);
                 let bytes = vec![0 as u8; length as usize];
@@ -102,11 +95,9 @@ impl Attribute {
                 Attribute::Unknown {
                     name_index: name_index,
                     length: length,
-                    info: slice
+                    info: slice,
                 }
             }
         }
     }
 }
-
-

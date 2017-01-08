@@ -22,29 +22,30 @@ pub struct Class {
     pub methods_count: u16,
     pub methods: Box<[Method]>,
     pub attributes_count: u16,
-    pub attributes: Box<[Attribute]>
+    pub attributes: Box<[Attribute]>,
 }
 
 impl Class {
     pub fn new(data: Vec<u8>) -> Class {
         let mut cur = Cursor::new(data);
         assert_eq!(MAGIC_VALUE, cur.read_u32::<BigEndian>().unwrap());
-        
+
         let minor_version = cur.read_u16::<BigEndian>().unwrap();
         let major_version = cur.read_u16::<BigEndian>().unwrap();
-        
+
         let constant_pool_count = cur.read_u16::<BigEndian>().unwrap();
         let mut constant_pool = Vec::with_capacity((constant_pool_count - 1) as usize);
         let mut i = 1;
         while i < constant_pool_count {
             let constant = Constant::new(&mut cur);
             match constant {
-                Constant::Long { .. } | Constant::Double { .. } => {
+                Constant::Long { .. } |
+                Constant::Double { .. } => {
                     i += 1; // Longs and Doubles take up two slots...
                     constant_pool.push(constant);
                     constant_pool.push(Constant::Nothing);
-                },
-                _ => constant_pool.push(constant)
+                }
+                _ => constant_pool.push(constant),
             };
             i += 1;
         }
@@ -92,8 +93,7 @@ impl Class {
             methods_count: methods_count,
             methods: methods.into_boxed_slice(),
             attributes_count: attributes_count,
-            attributes: attributes.into_boxed_slice()
+            attributes: attributes.into_boxed_slice(),
         }
     }
 }
-

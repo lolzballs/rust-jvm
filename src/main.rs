@@ -21,7 +21,7 @@ fn main() {
     let class_file = env::args().nth(1).unwrap();
 
     let class_bin = read_bin(&class_file);
-    
+
     let class = class::Class::new(class_bin);
     let constant_pool = vm::constant_pool::ConstantPool::new(&class.constant_pool);
     let class_sig = vm::sig::Class::new("Test");
@@ -31,20 +31,18 @@ fn main() {
 
     use vm::sig;
     use vm::symref;
-    let string_ty =
-        sig::Type::Reference(sig::Class::Scalar(String::from("java/lang/String")));
+    let string_ty = sig::Type::Reference(sig::Class::Scalar(String::from("java/lang/String")));
     let string_array_ty = sig::Type::Reference(sig::Class::Array(Box::new(string_ty)));
     let main_sig = sig::Method {
         name: String::from("main"),
         params: vec![string_array_ty],
-        return_type: None
+        return_type: None,
     };
     let main_symref = symref::Method {
         class: class_symref,
-        sig: main_sig
+        sig: main_sig,
     };
 
     let method = class.find_method(&main_symref);
     method.invoke(&class);
 }
-

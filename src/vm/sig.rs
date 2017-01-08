@@ -8,7 +8,7 @@ pub enum Type {
     Float,
     Double,
     Boolean,
-    Reference(Class)
+    Reference(Class),
 }
 
 impl Type {
@@ -31,10 +31,8 @@ impl Type {
                 let end = rem.find(';').unwrap();
                 let (name, rem) = rem.split_at(end);
                 (Some(Type::Reference(Class::new(name))), end + 2)
-            },
-            "V" => {
-                (None, 1)
-            },
+            }
+            "V" => (None, 1),
             "[" => {
                 let (ty, len) = Self::new_partial(rem);
                 let array_type = Type::Reference(Class::Array(Box::new(ty.unwrap())));
@@ -51,7 +49,7 @@ impl Type {
 #[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub enum Class {
     Scalar(String),
-    Array(Box<Type>)
+    Array(Box<Type>),
 }
 
 impl Class {
@@ -68,7 +66,7 @@ impl Class {
 pub struct Method {
     pub name: String,
     pub params: Vec<Type>,
-    pub return_type: Option<Type>
+    pub return_type: Option<Type>,
 }
 
 impl Method {
@@ -77,9 +75,7 @@ impl Method {
             panic!("Invalid method descriptor");
         }
         let end_param = match descriptor.find(')') {
-            Some(res) => {
-                res
-            },
+            Some(res) => res,
             None => {
                 panic!("Invalid method descriptor");
             }
@@ -95,13 +91,13 @@ impl Method {
             params = params.split_at(used).1;
             types.push(ty.unwrap());
         }
-        
+
         let return_type = Type::new_partial(&descriptor[(end_param + 1)..]).0;
-        
+
         Method {
             name: name,
             params: types,
-            return_type: return_type
+            return_type: return_type,
         }
     }
 }
@@ -109,15 +105,14 @@ impl Method {
 #[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub struct Field {
     name: String,
-    ty: Type
+    ty: Type,
 }
 
 impl Field {
     pub fn new(name: String, ty: Type) -> Self {
         Field {
             name: name,
-            ty: ty
+            ty: ty,
         }
     }
 }
-

@@ -23,12 +23,11 @@ pub struct Method {
     pub name_index: u16,
     pub descriptor_index: u16,
     attributes_count: u16,
-    pub attributes: Box<[Attribute]>
+    pub attributes: Box<[Attribute]>,
 }
 
 impl Method {
-    pub fn new(constant_pool: &Box<[Constant]>, 
-               cur: &mut Cursor<Vec<u8>>) -> Method{
+    pub fn new(constant_pool: &Box<[Constant]>, cur: &mut Cursor<Vec<u8>>) -> Method {
         let access_flags = cur.read_u16::<BigEndian>().unwrap();
         let name_index = cur.read_u16::<BigEndian>().unwrap();
         let descriptor_index = cur.read_u16::<BigEndian>().unwrap();
@@ -44,7 +43,7 @@ impl Method {
             name_index: name_index,
             descriptor_index: descriptor_index,
             attributes_count: attributes_count,
-            attributes: attributes.into_boxed_slice()
+            attributes: attributes.into_boxed_slice(),
         }
     }
 }

@@ -15,6 +15,5 @@ pub enum Value {
     Float(f32),
     Long(i64),
     Double(f64),
-    Reference(Rc<RefCell<class::Class>>)
+    Reference(Rc<RefCell<class::Class>>),
 }
-
