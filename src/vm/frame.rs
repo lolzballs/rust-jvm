@@ -58,6 +58,13 @@ impl<'a> Frame<'a> {
             });
         }
 
+        macro_rules! load {
+            ($index: expr) => ({
+                let local = self.local_variables[$index as usize].clone().unwrap();
+                push!(local);
+            });
+        }
+
         loop {
             match self.read_u8() {
                 opcode::NOP => (),
@@ -88,24 +95,128 @@ impl<'a> Frame<'a> {
                     let index = self.read_u8();
                     push!(self.class.get_constant_pool().resolve_literal(index as u16).clone());
                 }
-                opcode::ISTORE_0 => store!(0),
-                opcode::ISTORE_1 => store!(1),
-                opcode::ISTORE_2 => store!(2),
-                opcode::ISTORE_3 => store!(3),
-                opcode::ILOAD_1 => {
-                    let local = self.local_variables[1].clone().unwrap();
-                    push!(local);
+                // TODO: LDC_W and LDC2_W
+                opcode::ILOAD | opcode::LLOAD | opcode::FLOAD | opcode::DLOAD | opcode::ALOAD => {
+                    let index = self.read_u8();
+                    load!(index);
+                }
+                opcode::ILOAD_0 | opcode::LLOAD_0 | opcode::FLOAD_0 | opcode::DLOAD_0 |
+                opcode::ALOAD_0 => load!(0),
+                opcode::ILOAD_1 | opcode::LLOAD_1 | opcode::FLOAD_1 | opcode::DLOAD_1 |
+                opcode::ALOAD_1 => load!(1),
+                opcode::ILOAD_2 | opcode::LLOAD_2 | opcode::FLOAD_2 | opcode::DLOAD_2 |
+                opcode::ALOAD_2 => load!(2),
+                opcode::ILOAD_3 | opcode::LLOAD_3 | opcode::FLOAD_3 | opcode::DLOAD_3 |
+                opcode::ALOAD_3 => load!(3),
+                // TODO: Array stuff
+                opcode::ISTORE | opcode::LSTORE | opcode::FSTORE | opcode::DSTORE |
+                opcode::ASTORE => {
+                    let index = self.read_u8();
+                    store!(index);
+                }
+                opcode::ISTORE_0 | opcode::LSTORE_0 | opcode::FSTORE_0 | opcode::DSTORE_0 |
+                opcode::ASTORE_0 => store!(0),
+                opcode::ISTORE_1 | opcode::LSTORE_1 | opcode::FSTORE_1 | opcode::DSTORE_1 |
+                opcode::ASTORE_1 => store!(1),
+                opcode::ISTORE_2 | opcode::LSTORE_2 | opcode::FSTORE_2 | opcode::DSTORE_2 |
+                opcode::ASTORE_2 => store!(2),
+                // TODO: Array stuff
+                opcode::POP => {
+                    pop!();
+                }
+                // TODO: POP2
+                opcode::DUP => {
+                    let operand = self.operand_stack.last().unwrap().clone();
+                    push!(operand);
+                }
+                // TODO: DUP_X1 and DUP_X2
+                // TODO: DUP2, DUP2_X1, and DUP2_X2
+                opcode::SWAP => {
+                    let val2 = pop!();
+                    let val1 = pop!();
+                    push!(val2);
+                    push!(val1);
                 }
                 opcode::IADD => {
                     let val2 = pop!(Value::Int);
                     let val1 = pop!(Value::Int);
-                    self.operand_stack.push(Value::Int(val1 + val2));
+                    push!(Value::Int(val1 + val2));
+                }
+                opcode::LADD => {
+                    let val2 = pop!(Value::Long);
+                    let val1 = pop!(Value::Long);
+                    push!(Value::Long(val1 + val2));
+                }
+                opcode::FADD => {
+                    let val2 = pop!(Value::Float);
+                    let val1 = pop!(Value::Float);
+                    push!(Value::Float(val1 + val2));
+                }
+                opcode::DADD => {
+                    let val2 = pop!(Value::Double);
+                    let val1 = pop!(Value::Double);
+                    push!(Value::Double(val1 + val2));
                 }
                 opcode::ISUB => {
                     let val2 = pop!(Value::Int);
                     let val1 = pop!(Value::Int);
-                    self.operand_stack.push(Value::Int(val1 - val2));
+                    push!(Value::Int(val1 - val2));
                 }
+                opcode::LSUB => {
+                    let val2 = pop!(Value::Long);
+                    let val1 = pop!(Value::Long);
+                    push!(Value::Long(val1 - val2));
+                }
+                opcode::FSUB => {
+                    let val2 = pop!(Value::Float);
+                    let val1 = pop!(Value::Float);
+                    push!(Value::Float(val1 - val2));
+                }
+                opcode::DSUB => {
+                    let val2 = pop!(Value::Double);
+                    let val1 = pop!(Value::Double);
+                    push!(Value::Double(val1 - val2));
+                }
+                opcode::IMUL => {
+                    let val2 = pop!(Value::Int);
+                    let val1 = pop!(Value::Int);
+                    push!(Value::Int(val1 * val2));
+                }
+                opcode::LMUL => {
+                    let val2 = pop!(Value::Long);
+                    let val1 = pop!(Value::Long);
+                    push!(Value::Long(val1 * val2));
+                }
+                opcode::FMUL => {
+                    let val2 = pop!(Value::Float);
+                    let val1 = pop!(Value::Float);
+                    push!(Value::Float(val1 * val2));
+                }
+                opcode::DMUL => {
+                    let val2 = pop!(Value::Double);
+                    let val1 = pop!(Value::Double);
+                    push!(Value::Double(val1 * val2));
+                }               
+                opcode::IDIV => {
+                    let val2 = pop!(Value::Int);
+                    let val1 = pop!(Value::Int);
+                    push!(Value::Int(val1 / val2));
+                }
+                opcode::LDIV => {
+                    let val2 = pop!(Value::Long);
+                    let val1 = pop!(Value::Long);
+                    push!(Value::Long(val1 / val2));
+                }
+                opcode::FDIV => {
+                    let val2 = pop!(Value::Float);
+                    let val1 = pop!(Value::Float);
+                    push!(Value::Float(val1 / val2));
+                }
+                opcode::DDIV => {
+                    let val2 = pop!(Value::Double);
+                    let val1 = pop!(Value::Double);
+                    push!(Value::Double(val1 / val2));
+                }               
                 opcode::INVOKESTATIC => {
                     let index = self.read_u16();
                     if let Some(ConstantPoolEntry::MethodRef(ref symref)) =
