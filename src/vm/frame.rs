@@ -404,6 +404,46 @@ impl<'a> Frame<'a> {
                     let value = pop!(Value::Long).0 as u64;
                     push!(Value::Long(Wrapping((value << (shift & 0x3F) as usize) as i64)));
                 }
+                opcode::IAND => {
+                    let val2 = pop!(Value::Int);
+                    let val1 = pop!(Value::Int);
+                    push!(Value::Int(val1 & val2));
+                }
+                opcode::LAND => {
+                    let val2 = pop!(Value::Long);
+                    let val1 = pop!(Value::Long);
+                    push!(Value::Long(val1 & val2));
+                }
+                opcode::IOR => {
+                    let val2 = pop!(Value::Int);
+                    let val1 = pop!(Value::Int);
+                    push!(Value::Int(val1 | val2));
+                }
+                opcode::LOR => {
+                    let val2 = pop!(Value::Long);
+                    let val1 = pop!(Value::Long);
+                    push!(Value::Long(val1 | val2));
+                }
+                opcode::IXOR => {
+                    let val2 = pop!(Value::Int);
+                    let val1 = pop!(Value::Int);
+                    push!(Value::Int(val1 ^ val2));
+                }
+                opcode::LXOR => {
+                    let val2 = pop!(Value::Long);
+                    let val1 = pop!(Value::Long);
+                    push!(Value::Long(val1 ^ val2));
+                }
+                opcode::IINC => {
+                    let index = self.read_u8();
+                    let const_incr = (self.read_u8() as i8) as i32;
+                    match self.local_variables[index as usize] {
+                        Some(Value::Int(ref mut value)) => {
+                            *value += Wrapping(const_incr);
+                        }
+                        _ => panic!("Cannot IINC on non-integer at index: {}", index),
+                    };
+                }
                 opcode::INVOKESTATIC => {
                     let index = self.read_u16();
                     if let Some(ConstantPoolEntry::MethodRef(ref symref)) =
