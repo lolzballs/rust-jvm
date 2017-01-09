@@ -373,6 +373,37 @@ impl<'a> Frame<'a> {
                     let val1 = pop!(Value::Double);
                     push!(Value::Double(-val1));
                 }
+                opcode::ISHL => {
+                    let Wrapping(shift) = pop!(Value::Int);
+                    let value = pop!(Value::Int);
+                    push!(Value::Int(value << (shift & 0x1F) as usize));
+                }
+                opcode::LSHL => {
+                    let Wrapping(shift) = pop!(Value::Int);
+                    let value = pop!(Value::Long);
+                    push!(Value::Long(value << (shift & 0x3F) as usize));
+                }
+                opcode::ISHR => {
+                    let Wrapping(shift) = pop!(Value::Int);
+                    let value = pop!(Value::Int);
+                    push!(Value::Int(value >> (shift & 0x1F) as usize));
+                }
+                opcode::LSHR => {
+                    let Wrapping(shift) = pop!(Value::Int);
+                    let value = pop!(Value::Long);
+                    push!(Value::Long(value >> (shift & 0x3F) as usize));
+                }
+                // TODO: Check correctness for logical shifts
+                opcode::IUSHR => {
+                    let Wrapping(shift) = pop!(Value::Int);
+                    let value = pop!(Value::Int).0 as u32;
+                    push!(Value::Int(Wrapping((value << (shift & 0x1F) as usize) as i32)));
+                }
+                opcode::LUSHR => {
+                    let Wrapping(shift) = pop!(Value::Int);
+                    let value = pop!(Value::Long).0 as u64;
+                    push!(Value::Long(Wrapping((value << (shift & 0x3F) as usize) as i64)));
+                }
                 opcode::INVOKESTATIC => {
                     let index = self.read_u16();
                     if let Some(ConstantPoolEntry::MethodRef(ref symref)) =
