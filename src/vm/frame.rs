@@ -516,6 +516,25 @@ impl<'a> Frame<'a> {
                         v => panic!("Expected Double, got {:?}", v), 
                     };
                 }
+                // TODO: Check if these narrowing conversions are valid
+                opcode::I2B => {
+                    match pop!() {
+                        Value::Int(v) => push!(Value::Int(Wrapping(v.0 as i8 as i32))),
+                        v => panic!("Expected Int, got {:?}", v), 
+                    };
+                }
+                opcode::I2C => {
+                    match pop!() {
+                        Value::Int(v) => push!(Value::Int(Wrapping(v.0 as u16 as i32))),
+                        v => panic!("Expected Int, got {:?}", v), 
+                    };
+                }
+                opcode::I2S => {
+                    match pop!() {
+                        Value::Int(v) => push!(Value::Int(Wrapping(v.0 as i16 as i32))),
+                        v => panic!("Expected Int, got {:?}", v), 
+                    };
+                }
                 opcode::INVOKESTATIC => {
                     let index = self.read_u16();
                     if let Some(ConstantPoolEntry::MethodRef(ref symref)) =
