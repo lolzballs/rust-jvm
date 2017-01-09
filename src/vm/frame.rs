@@ -3,6 +3,8 @@ use super::constant_pool::ConstantPoolEntry;
 use super::opcode;
 use super::Value;
 
+use std::f32;
+use std::f64;
 use std::num::Wrapping;
 
 #[derive(Debug)]
@@ -534,6 +536,61 @@ impl<'a> Frame<'a> {
                         Value::Int(v) => push!(Value::Int(Wrapping(v.0 as i16 as i32))),
                         v => panic!("Expected Int, got {:?}", v), 
                     };
+                }
+                opcode::LCMP => {
+                    let val2 = pop!(Value::Long);
+                    let val1 = pop!(Value::Long);
+                    if val1 > val2 {
+                        push!(Value::Int(Wrapping(1)));
+                    } else if val1 < val2 {
+                        push!(Value::Int(Wrapping(-1)));
+                    } else {
+                        push!(Value::Int(Wrapping(0)));
+                    }
+                }
+                opcode::FCMPL => {
+                    let val2 = pop!(Value::Float);
+                    let val1 = pop!(Value::Float);
+                    if val1 == f32::NAN || val2 == f32::NAN || val1 < val2 {
+                        push!(Value::Float(-1.0));
+                    } else if val1 > val2 {
+                        push!(Value::Float(1.0));
+                    } else {
+                        push!(Value::Float(0.0));
+                    }
+                }
+                opcode::FCMPG => {
+                    let val2 = pop!(Value::Float);
+                    let val1 = pop!(Value::Float);
+                    if val1 == f32::NAN || val2 == f32::NAN || val1 > val2 {
+                        push!(Value::Float(1.0));
+                    } else if val1 < val2 {
+                        push!(Value::Float(-1.0));
+                    } else {
+                        push!(Value::Float(0.0));
+                    }
+                }
+                opcode::DCMPL => {
+                    let val2 = pop!(Value::Double);
+                    let val1 = pop!(Value::Double);
+                    if val1 == f64::NAN || val2 == f64::NAN || val1 < val2 {
+                        push!(Value::Double(-1.0));
+                    } else if val1 > val2 {
+                        push!(Value::Double(1.0));
+                    } else {
+                        push!(Value::Double(0.0));
+                    }
+                }
+                opcode::DCMPG => {
+                    let val2 = pop!(Value::Double);
+                    let val1 = pop!(Value::Double);
+                    if val1 == f64::NAN || val2 == f64::NAN || val1 > val2 {
+                        push!(Value::Double(1.0));
+                    } else if val1 < val2 {
+                        push!(Value::Double(-1.0));
+                    } else {
+                        push!(Value::Double(0.0));
+                    }
                 }
                 opcode::INVOKESTATIC => {
                     let index = self.read_u16();
