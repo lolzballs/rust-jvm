@@ -173,7 +173,6 @@ impl<'a> Frame<'a> {
                         }
                     }
                 }
-                // TODO: DUP2, DUP2_X1, and DUP2_X2
                 opcode::DUP2 => {
                     let value1 = pop!();
                     match value1 {
@@ -317,7 +316,7 @@ impl<'a> Frame<'a> {
                     let val2 = pop!(Value::Double);
                     let val1 = pop!(Value::Double);
                     push!(Value::Double(val1 * val2));
-                }               
+                }
                 opcode::IDIV => {
                     let val2 = pop!(Value::Int);
                     let val1 = pop!(Value::Int);
@@ -336,8 +335,44 @@ impl<'a> Frame<'a> {
                 opcode::DDIV => {
                     let val2 = pop!(Value::Double);
                     let val1 = pop!(Value::Double);
-                    push!(Value::Double(val1 / val2));
-                }               
+                    push!(Value::Double(val1 % val2));
+                }
+                opcode::IREM => {
+                    let val2 = pop!(Value::Int);
+                    let val1 = pop!(Value::Int);
+                    push!(Value::Int(val1 % val2));
+                }
+                opcode::LREM => {
+                    let val2 = pop!(Value::Long);
+                    let val1 = pop!(Value::Long);
+                    push!(Value::Long(val1 % val2));
+                }
+                opcode::FREM => {
+                    let val2 = pop!(Value::Float);
+                    let val1 = pop!(Value::Float);
+                    push!(Value::Float(val1 % val2));
+                }
+                opcode::DREM => {
+                    let val2 = pop!(Value::Double);
+                    let val1 = pop!(Value::Double);
+                    push!(Value::Double(val1 % val2));
+                }
+                opcode::INEG => {
+                    let val1 = pop!(Value::Int);
+                    push!(Value::Int(-val1));
+                }
+                opcode::LNEG => {
+                    let val1 = pop!(Value::Long);
+                    push!(Value::Long(-val1));
+                }
+                opcode::FNEG => {
+                    let val1 = pop!(Value::Float);
+                    push!(Value::Float(-val1));
+                }
+                opcode::DNEG => {
+                    let val1 = pop!(Value::Double);
+                    push!(Value::Double(-val1));
+                }
                 opcode::INVOKESTATIC => {
                     let index = self.read_u16();
                     if let Some(ConstantPoolEntry::MethodRef(ref symref)) =
