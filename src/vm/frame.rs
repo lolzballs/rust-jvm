@@ -444,6 +444,78 @@ impl<'a> Frame<'a> {
                         _ => panic!("Cannot IINC on non-integer at index: {}", index),
                     };
                 }
+                opcode::I2L => {
+                    match pop!() {
+                        Value::Int(v) => push!(Value::Long(Wrapping(v.0 as i64))),
+                        v => panic!("Expected Int, got {:?}", v), 
+                    };
+                }
+                opcode::I2F => {
+                    match pop!() {
+                        Value::Int(v) => push!(Value::Float(v.0 as f32)),
+                        v => panic!("Expected Int, got {:?}", v), 
+                    };
+                }
+                opcode::I2D => {
+                    match pop!() {
+                        Value::Int(v) => push!(Value::Double(v.0 as f64)),
+                        v => panic!("Expected Int, got {:?}", v), 
+                    };
+                }
+                opcode::L2I => {
+                    match pop!() {
+                        Value::Long(v) => push!(Value::Int(Wrapping(v.0 as i32))),
+                        v => panic!("Expected Long, got {:?}", v), 
+                    };
+                }
+                opcode::L2F => {
+                    match pop!() {
+                        Value::Long(v) => push!(Value::Float(v.0 as f32)),
+                        v => panic!("Expected Long, got {:?}", v), 
+                    };
+                }
+                opcode::L2D => {
+                    match pop!() {
+                        Value::Long(v) => push!(Value::Double(v.0 as f64)),
+                        v => panic!("Expected Long, got {:?}", v), 
+                    };
+                }
+                opcode::F2I => {
+                    match pop!() {
+                        Value::Float(v) => push!(Value::Int(Wrapping(v as i32))),
+                        v => panic!("Expected Float, got {:?}", v), 
+                    };
+                }
+                opcode::F2L => {
+                    match pop!() {
+                        Value::Float(v) => push!(Value::Long(Wrapping(v as i64))),
+                        v => panic!("Expected Float, got {:?}", v), 
+                    };
+                }
+                opcode::F2D => {
+                    match pop!() {
+                        Value::Float(v) => push!(Value::Double(v as f64)),
+                        v => panic!("Expected Float, got {:?}", v), 
+                    };
+                }
+                opcode::D2I => {
+                    match pop!() {
+                        Value::Double(v) => push!(Value::Int(Wrapping(v as i32))),
+                        v => panic!("Expected Double, got {:?}", v), 
+                    };
+                }
+                opcode::D2L => {
+                    match pop!() {
+                        Value::Double(v) => push!(Value::Long(Wrapping(v as i64))),
+                        v => panic!("Expected Double, got {:?}", v), 
+                    };
+                }
+                opcode::D2F => {
+                    match pop!() {
+                        Value::Double(v) => push!(Value::Double(v as f64)),
+                        v => panic!("Expected Double, got {:?}", v), 
+                    };
+                }
                 opcode::INVOKESTATIC => {
                     let index = self.read_u16();
                     if let Some(ConstantPoolEntry::MethodRef(ref symref)) =
