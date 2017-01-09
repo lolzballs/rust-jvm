@@ -56,6 +56,13 @@ impl<'a> Frame<'a> {
         macro_rules! store {
             ($index: expr) => ({
                 let value = pop!();
+                // the local variables at index and index+1 are set to value for long and double
+                match value {
+                    Value::Long(_) | Value::Double(_) => {
+                        self.local_variables[($index + 1) as usize] = None;
+                    },
+                    _ => ()
+                }
                 self.local_variables[$index as usize] = Some(value);
             });
         }
@@ -97,7 +104,10 @@ impl<'a> Frame<'a> {
                     let index = self.read_u8();
                     push!(self.class.get_constant_pool().resolve_literal(index as u16).clone());
                 }
-                // TODO: LDC_W and LDC2_W
+                opcode::LDC_W | opcode::LDC2_W => {
+                    let index = self.read_u16();
+                    push!(self.class.get_constant_pool().resolve_literal(index).clone());
+                }
                 opcode::ILOAD | opcode::LLOAD | opcode::FLOAD | opcode::DLOAD | opcode::ALOAD => {
                     let index = self.read_u8();
                     load!(index);
@@ -126,13 +136,122 @@ impl<'a> Frame<'a> {
                 opcode::POP => {
                     pop!();
                 }
-                // TODO: POP2
+                opcode::POP2 => {
+                    match pop!() {
+                        Value::Long(_) | Value::Double(_) => (),
+                        _ => {
+                            pop!();
+                        }
+                    };
+                }
                 opcode::DUP => {
                     let operand = self.operand_stack.last().unwrap().clone();
                     push!(operand);
                 }
-                // TODO: DUP_X1 and DUP_X2
+                opcode::DUP_X1 => {
+                    let value1 = pop!();
+                    let value2 = pop!();
+                    push!(value1.clone());
+                    push!(value2);
+                    push!(value1);
+                }
+                opcode::DUP_X2 => {
+                    let value1 = pop!();
+                    let value2 = pop!();
+                    match value2 {
+                        Value::Long(_) | Value::Double(_) => {
+                            push!(value1.clone());
+                            push!(value2);
+                            push!(value1);
+                        }
+                        _ => {
+                            let value3 = pop!();
+                            push!(value1.clone());
+                            push!(value2);
+                            push!(value3);
+                            push!(value1);
+                        }
+                    }
+                }
                 // TODO: DUP2, DUP2_X1, and DUP2_X2
+                opcode::DUP2 => {
+                    let value1 = pop!();
+                    match value1 {
+                        Value::Long(_) | Value::Double(_) => {
+                            push!(value1.clone());
+                            push!(value1);
+                        }
+                        _ => {
+                            let value2 = pop!();
+                            push!(value1.clone());
+                            push!(value2.clone());
+                            push!(value1);
+                            push!(value2);
+                        }
+                    }
+                }
+                opcode::DUP2_X1 => {
+                    let value1 = pop!();
+                    let value2 = pop!();
+                    match value1 {
+                        Value::Long(_) | Value::Double(_) => {
+                            push!(value1.clone());
+                            push!(value2);
+                            push!(value1);
+                        }
+                        _ => {
+                            let value3 = pop!();
+                            push!(value1.clone());
+                            push!(value2.clone());
+                            push!(value3);
+                            push!(value1);
+                            push!(value2);
+                        }
+                    }
+                }
+                opcode::DUP2_X2 => {
+                    let value1 = pop!();
+                    let value2 = pop!();
+                    match value1 {
+                        Value::Long(_) | Value::Double(_) => {
+                            match value2 {
+                                Value::Long(_) | Value::Double(_) => {
+                                    push!(value1.clone());
+                                    push!(value2);
+                                    push!(value1);
+                                }
+                                _ => {
+                                    let value3 = pop!();
+                                    push!(value1.clone());
+                                    push!(value2);
+                                    push!(value3);
+                                    push!(value1);
+                                }
+                            }
+                        }
+                        _ => {
+                            let value3 = pop!();
+                            match value3 {
+                                Value::Long(_) | Value::Double(_) => {
+                                    push!(value1.clone());
+                                    push!(value2.clone());
+                                    push!(value3);
+                                    push!(value1);
+                                    push!(value2);
+                                }
+                                _ => {
+                                    let value4 = pop!();
+                                    push!(value1.clone());
+                                    push!(value2.clone());
+                                    push!(value3);
+                                    push!(value4);
+                                    push!(value1);
+                                    push!(value2);
+                                }
+                            }
+                        }
+                    }
+                }
                 opcode::SWAP => {
                     let val2 = pop!();
                     let val1 = pop!();
