@@ -153,7 +153,12 @@ impl<'a> Frame<'a> {
                 opcode::ALOAD_2 => load!(2),
                 opcode::ILOAD_3 | opcode::LLOAD_3 | opcode::FLOAD_3 | opcode::DLOAD_3 |
                 opcode::ALOAD_3 => load!(3),
-                // TODO: Array stuff
+                opcode::IALOAD | opcode::LALOAD | opcode::FALOAD | opcode::DALOAD |
+                opcode::AALOAD | opcode::BALOAD | opcode::CALOAD | opcode::SALOAD => {
+                    let index = pop!(Value::Int).0 as usize;
+                    let arrayref = pop!(Value::ArrayReference);
+                    push!(arrayref.borrow().get(index));
+                }
                 opcode::ISTORE | opcode::LSTORE | opcode::FSTORE | opcode::DSTORE |
                 opcode::ASTORE => {
                     let index = self.read_u8();
@@ -167,7 +172,13 @@ impl<'a> Frame<'a> {
                 opcode::ASTORE_2 => store!(2),
                 opcode::ISTORE_3 | opcode::LSTORE_3 | opcode::FSTORE_3 | opcode::DSTORE_3 |
                 opcode::ASTORE_3 => store!(3),
-                // TODO: Array stuff
+                opcode::IASTORE | opcode::LASTORE | opcode::FASTORE | opcode::DASTORE |
+                opcode::AASTORE | opcode::BASTORE | opcode::CASTORE | opcode::SASTORE => {
+                    let value = pop!();
+                    let index = pop!(Value::Int).0 as usize;
+                    let arrayref = pop!(Value::ArrayReference);
+                    arrayref.borrow_mut().insert(index, value);
+                }
                 opcode::POP => {
                     pop!();
                 }
@@ -202,8 +213,8 @@ impl<'a> Frame<'a> {
                         _ => {
                             let value3 = pop!();
                             push!(value1.clone());
-                            push!(value2);
                             push!(value3);
+                            push!(value2);
                             push!(value1);
                         }
                     }
@@ -235,11 +246,11 @@ impl<'a> Frame<'a> {
                         }
                         _ => {
                             let value3 = pop!();
-                            push!(value1.clone());
                             push!(value2.clone());
+                            push!(value1.clone());
                             push!(value3);
-                            push!(value1);
                             push!(value2);
+                            push!(value1);
                         }
                     }
                 }
@@ -257,8 +268,8 @@ impl<'a> Frame<'a> {
                                 _ => {
                                     let value3 = pop!();
                                     push!(value1.clone());
-                                    push!(value2);
                                     push!(value3);
+                                    push!(value2);
                                     push!(value1);
                                 }
                             }
@@ -267,20 +278,20 @@ impl<'a> Frame<'a> {
                             let value3 = pop!();
                             match value3 {
                                 Value::Long(_) | Value::Double(_) => {
-                                    push!(value1.clone());
                                     push!(value2.clone());
+                                    push!(value1.clone());
                                     push!(value3);
-                                    push!(value1);
                                     push!(value2);
+                                    push!(value1);
                                 }
                                 _ => {
                                     let value4 = pop!();
-                                    push!(value1.clone());
                                     push!(value2.clone());
-                                    push!(value3);
+                                    push!(value1.clone());
                                     push!(value4);
-                                    push!(value1);
+                                    push!(value3);
                                     push!(value2);
+                                    push!(value1);
                                 }
                             }
                         }

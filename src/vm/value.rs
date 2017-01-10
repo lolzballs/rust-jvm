@@ -51,4 +51,12 @@ impl Array {
             array: array,
         }
     }
+
+    pub fn get(&self, index: usize) -> Value {
+        self.array[index].clone()
+    }
+
+    pub fn insert(&mut self, index: usize, value: Value) {
+        self.array[index] = value;
+    }
 }
