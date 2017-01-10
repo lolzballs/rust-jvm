@@ -774,6 +774,13 @@ impl<'a> Frame<'a> {
                         branch!(pc, default);
                     }
                 }
+                opcode::IRETURN | opcode::LRETURN | opcode::FRETURN | opcode::DRETURN |
+                opcode::ARETURN => {
+                    return Some(pop!());
+                }
+                opcode::RETURN => {
+                    return None;
+                }
                 opcode::INVOKESTATIC => {
                     let index = self.read_u16();
                     if let Some(ConstantPoolEntry::MethodRef(ref symref)) =
@@ -787,9 +794,6 @@ impl<'a> Frame<'a> {
                     } else {
                         panic!("invokestatic must refer to a MethodRef");
                     }
-                }
-                opcode::RETURN => {
-                    return None;
                 }
                 _ => {
                     println!("{:#?}", self);
