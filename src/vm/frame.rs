@@ -89,7 +89,7 @@ impl<'a> Frame<'a> {
 
         macro_rules! branch {
             ($pc: expr, $offset: expr) => ({
-                self.pc = $pc + $offset;
+                self.pc = ($pc as i16 + $offset as i16) as u16;
             });
         }
 
@@ -613,49 +613,49 @@ impl<'a> Frame<'a> {
                 }
                 opcode::IFEQ => {
                     let pc = self.pc - 1; // pc is incremented for each byte read
-                    let offset = self.read_u16();
+                    let offset = self.read_u16() as i16;
                     if pop!(Value::Int) == Wrapping(0) {
                         branch!(pc, offset);
                     }
                 }
                 opcode::IFNE => {
                     let pc = self.pc - 1; // pc is incremented for each byte read
-                    let offset = self.read_u16();
+                    let offset = self.read_u16() as i16;
                     if pop!(Value::Int) != Wrapping(0) {
                         branch!(pc, offset);
                     }
                 }
                 opcode::IFLT => {
                     let pc = self.pc - 1; // pc is incremented for each byte read
-                    let offset = self.read_u16();
+                    let offset = self.read_u16() as i16;
                     if pop!(Value::Int) < Wrapping(0) {
                         branch!(pc, offset);
                     }
                 }
                 opcode::IFGE => {
                     let pc = self.pc - 1; // pc is incremented for each byte read
-                    let offset = self.read_u16();
+                    let offset = self.read_u16() as i16;
                     if pop!(Value::Int) >= Wrapping(0) {
                         branch!(pc, offset);
                     }
                 }
                 opcode::IFGT => {
                     let pc = self.pc - 1; // pc is incremented for each byte read
-                    let offset = self.read_u16();
+                    let offset = self.read_u16() as i16;
                     if pop!(Value::Int) > Wrapping(0) {
                         branch!(pc, offset);
                     }
                 }
                 opcode::IFLE => {
                     let pc = self.pc - 1; // pc is incremented for each byte read
-                    let offset = self.read_u16();
+                    let offset = self.read_u16() as i16;
                     if pop!(Value::Int) <= Wrapping(0) {
                         branch!(pc, offset);
                     }
                 }
                 opcode::IF_ICMPEQ => {
                     let pc = self.pc - 1; // pc is incremented for each byte read
-                    let offset = self.read_u16();
+                    let offset = self.read_u16() as i16;
                     let val2 = pop!(Value::Int);
                     let val1 = pop!(Value::Int);
                     if val1 == val2 {
@@ -664,7 +664,7 @@ impl<'a> Frame<'a> {
                 }
                 opcode::IF_ICMPNE => {
                     let pc = self.pc - 1; // pc is incremented for each byte read
-                    let offset = self.read_u16();
+                    let offset = self.read_u16() as i16;
                     let val2 = pop!(Value::Int);
                     let val1 = pop!(Value::Int);
                     if val1 != val2 {
@@ -673,7 +673,7 @@ impl<'a> Frame<'a> {
                 }
                 opcode::IF_ICMPLT => {
                     let pc = self.pc - 1; // pc is incremented for each byte read
-                    let offset = self.read_u16();
+                    let offset = self.read_u16() as i16;
                     let val2 = pop!(Value::Int);
                     let val1 = pop!(Value::Int);
                     if val1 < val2 {
@@ -682,7 +682,7 @@ impl<'a> Frame<'a> {
                 }
                 opcode::IF_ICMPGE => {
                     let pc = self.pc - 1; // pc is incremented for each byte read
-                    let offset = self.read_u16();
+                    let offset = self.read_u16() as i16;
                     let val2 = pop!(Value::Int);
                     let val1 = pop!(Value::Int);
                     if val1 >= val2 {
@@ -691,7 +691,7 @@ impl<'a> Frame<'a> {
                 }
                 opcode::IF_ICMPGT => {
                     let pc = self.pc - 1; // pc is incremented for each byte read
-                    let offset = self.read_u16();
+                    let offset = self.read_u16() as i16;
                     let val2 = pop!(Value::Int);
                     let val1 = pop!(Value::Int);
                     if val1 > val2 {
@@ -700,7 +700,7 @@ impl<'a> Frame<'a> {
                 }
                 opcode::IF_ICMPLE => {
                     let pc = self.pc - 1; // pc is incremented for each byte read
-                    let offset = self.read_u16();
+                    let offset = self.read_u16() as i16;
                     let val2 = pop!(Value::Int);
                     let val1 = pop!(Value::Int);
                     if val1 <= val2 {
@@ -708,6 +708,11 @@ impl<'a> Frame<'a> {
                     }
                 }
                 // TODO: IF_ACMPEQ, IF_ACMPNE
+                opcode::GOTO => {
+                    let pc = self.pc - 1; // pc is incremented for each byte read
+                    let offset = self.read_u16() as i16;
+                    branch!(pc, offset);
+                }
                 opcode::INVOKESTATIC => {
                     let index = self.read_u16();
                     if let Some(ConstantPoolEntry::MethodRef(ref symref)) =
