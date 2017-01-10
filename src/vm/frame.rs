@@ -730,12 +730,12 @@ impl<'a> Frame<'a> {
                     while self.pc % 4 != 0 {
                         self.pc += 1;
                     }
-                    let default = self.read_u32();
-                    let low = self.read_u32();
-                    let high = self.read_u32();
+                    let default = self.read_u32() as i32;
+                    let low = self.read_u32() as i32;
+                    let high = self.read_u32() as i32;
 
                     let offsets = vec![0 as u32; (high - low + 1) as usize];
-                    let index = pop!(Value::Int);
+                    let index = pop!(Value::Int).0;
 
                     if index < low || index > high {
                         branch!(pc, default);
