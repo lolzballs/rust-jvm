@@ -83,6 +83,19 @@ impl Class {
     pub fn find_method(&self, method_symref: &symref::Method) -> &Method {
         self.methods.get(&method_symref.sig).unwrap()
     }
+
+    pub fn get_field(&self, field_symref: &symref::Field) -> Value {
+        let map_opt = self.field_values.borrow();
+        let map = map_opt.as_ref().unwrap();
+        map.get(&field_symref.sig).unwrap().clone()
+        // TODO: Superclass stuff
+    }
+
+    pub fn put_field(&self, field_symref: &symref::Field, value: Value) {
+        let mut map_opt = self.field_values.borrow_mut();
+        let mut map = map_opt.as_mut().unwrap();
+        map.insert(field_symref.sig.clone(), value);
+    }
 }
 
 #[derive(Debug)]

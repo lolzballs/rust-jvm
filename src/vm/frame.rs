@@ -781,6 +781,28 @@ impl<'a> Frame<'a> {
                 opcode::RETURN => {
                     return None;
                 }
+                opcode::GETSTATIC => {
+                    let index = self.read_u16();
+                    if let Some(ConstantPoolEntry::FieldRef(ref symref)) =
+                        self.class.get_constant_pool()[index] {
+                        // TODO: resolve class of field and get field from that class
+                        let value = self.class.get_field(symref);
+                        push!(value);
+                    } else {
+                        panic!("GETSTATIC {} must point to a FieldRef", index);
+                    }
+                }
+                opcode::PUTSTATIC => {
+                    let index = self.read_u16();
+                    if let Some(ConstantPoolEntry::FieldRef(ref symref)) =
+                        self.class.get_constant_pool()[index] {
+                        let value = pop!();
+                        // TODO: resolve class of field and get field from that class
+                        self.class.put_field(symref, value);
+                    } else {
+                        panic!("PUTSTATIC {} must point to a FieldRef", index);
+                    }
+                }
                 opcode::INVOKESTATIC => {
                     let index = self.read_u16();
                     if let Some(ConstantPoolEntry::MethodRef(ref symref)) =
