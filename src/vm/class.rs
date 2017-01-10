@@ -1,7 +1,8 @@
+use super::ConstantPool;
+use super::frame;
 use super::super::model;
 use super::sig;
 use super::symref;
-use super::ConstantPool;
 use super::value::Value;
 
 use std::collections::HashMap;
@@ -66,22 +67,28 @@ impl Class {
 
     pub fn initialize(&self) {
         // Initialize all the field_values
-        let mut field_values = HashMap::new();
-        for (sig, index) in &self.field_constants {
-            let value = self.constant_pool.resolve_literal(*index);
-            field_values.insert(sig.clone(), value.clone());
-        }
-        *self.field_values.borrow_mut() = Some(field_values);
-
-        let clinit_sig = sig::Method {
-            name: String::from("<clinit>"),
-            params: vec![],
-            return_type: None,
+        let run_clinit = match *self.field_values.borrow() {
+            None => true,
+            Some(_) => false,
         };
-        match self.methods.get(&clinit_sig) {
-            None => (),
-            Some(ref method) => {
-                let _ = method.invoke(&self, None);
+        if run_clinit {
+            let mut field_values = HashMap::new();
+            for (sig, index) in &self.field_constants {
+                let value = self.constant_pool.resolve_literal(*index);
+                field_values.insert(sig.clone(), value.clone());
+            }
+            *self.field_values.borrow_mut() = Some(field_values);
+
+            let clinit_sig = sig::Method {
+                name: String::from("<clinit>"),
+                params: vec![],
+                return_type: None,
+            };
+            match self.methods.get(&clinit_sig) {
+                None => (),
+                Some(ref method) => {
+                    let _ = method.invoke(&self, None);
+                }
             }
         }
     }
@@ -91,10 +98,12 @@ impl Class {
     }
 
     pub fn find_method(&self, method_symref: &symref::Method) -> &Method {
+        self.initialize();
         self.methods.get(&method_symref.sig).unwrap()
     }
 
     pub fn get_field(&self, field_symref: &symref::Field) -> Value {
+        self.initialize();
         let map_opt = self.field_values.borrow();
         let map = map_opt.as_ref().unwrap();
         map.get(&field_symref.sig).unwrap().clone()
@@ -102,6 +111,7 @@ impl Class {
     }
 
     pub fn put_field(&self, field_symref: &symref::Field, value: Value) {
+        self.initialize();
         let mut map_opt = self.field_values.borrow_mut();
         let mut map = map_opt.as_mut().unwrap();
         map.insert(field_symref.sig.clone(), value);
@@ -153,7 +163,7 @@ impl Method {
         while locals.len() < max_locals {
             locals.push(None);
         }
-        let frame = super::frame::Frame::new(class, &*self.code.code, locals);
+        let frame = frame::Frame::new(class, &*self.code.code, locals);
         frame.run()
     }
 }
