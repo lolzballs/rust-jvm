@@ -734,13 +734,44 @@ impl<'a> Frame<'a> {
                     let low = self.read_u32() as i32;
                     let high = self.read_u32() as i32;
 
-                    let offsets = vec![0 as u32; (high - low + 1) as usize];
-                    let index = pop!(Value::Int).0;
+                    let size = (high - low + 1) as usize;
+                    let mut offsets = vec![0 as u32; size];
+                    for i in 0..size {
+                        offsets.push(self.read_u32());
+                    }
 
+                    let index = pop!(Value::Int).0;
                     if index < low || index > high {
                         branch!(pc, default);
                     } else {
-                        branch!(pc, index - low);
+                        branch!(pc, offsets[(index - low) as usize]);
+                    }
+                }
+                // TODO: OPTIMIZE by transmuting bytes into i32s, then binary search
+                opcode::LOOKUPSWITCH => {
+                    let pc = self.pc - 1;
+                    // Align
+                    while self.pc % 4 != 0 {
+                        self.pc += 1;
+                    }
+                    let default = self.read_u32() as i32;
+                    let npairs = self.read_u32() as i32 as usize;
+
+                    let key = pop!(Value::Int).0;
+                    let mut found = false;
+
+                    for i in 0..npairs {
+                        let case = self.read_u32() as i32;
+                        let offset = self.read_u32() as i32;
+                        if key == case {
+                            branch!(pc, offset);
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if !found {
+                        branch!(pc, default);
                     }
                 }
                 opcode::INVOKESTATIC => {
