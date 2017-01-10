@@ -73,7 +73,17 @@ impl Class {
         }
         *self.field_values.borrow_mut() = Some(field_values);
 
-        // TODO: Clinit
+        let clinit_sig = sig::Method {
+            name: String::from("<clinit>"),
+            params: vec![],
+            return_type: None,
+        };
+        match self.methods.get(&clinit_sig) {
+            None => (),
+            Some(ref method) => {
+                let _ = method.invoke(&self);
+            }
+        }
     }
 
     pub fn get_constant_pool(&self) -> &ConstantPool {
