@@ -38,19 +38,24 @@ impl<'a> Frame<'a> {
         }
     }
 
-    pub fn read_u8(&mut self) -> u8 {
+    fn read_u8(&mut self) -> u8 {
         let result = self.code[self.pc as usize];
         self.pc += 1;
         result
     }
 
-    pub fn read_u16(&mut self) -> u16 {
+    fn read_u16(&mut self) -> u16 {
         ((self.read_u8() as u16) << 8) | (self.read_u8() as u16)
     }
 
-    pub fn read_u32(&mut self) -> u32 {
+    fn read_u32(&mut self) -> u32 {
         ((self.read_u8() as u32) << 24) | ((self.read_u8() as u32) << 16) |
         ((self.read_u8() as u32) << 8) | (self.read_u8() as u32)
+    }
+
+    fn pop_count(&mut self, count: usize) -> Vec<Value> {
+        let start = self.operand_stack.len() - count;
+        self.operand_stack.drain(start..).collect()
     }
 
     pub fn run(mut self) -> Option<Value> {
@@ -803,15 +808,25 @@ impl<'a> Frame<'a> {
                         panic!("PUTSTATIC {} must point to a FieldRef", index);
                     }
                 }
+                // TODO: GETFIELD and PUTFIELD
+                // TODO: INVOKEVIRTUAL and INVOKESPECIAL
                 opcode::INVOKESTATIC => {
                     let index = self.read_u16();
                     if let Some(ConstantPoolEntry::MethodRef(ref symref)) =
                         self.class.get_constant_pool()[index] {
-                        // TODO: Actually implement this
+                        // TODO: resolve class of method and get method from that class
+                        let method = self.class.find_method(symref);
+                        let num_args = symref.sig.params.len();
+                        let args = self.pop_count(num_args);
+                        // TODO: Remove this
                         if symref.sig.name == "println" {
-                            println!("{:?}", self.operand_stack.pop().unwrap());
+                            println!("{:?}", args);
                         } else {
-                            panic!("unimplemented");
+                            let result = method.invoke(self.class, Some(args));
+                            match result {
+                                None => (),
+                                Some(value) => self.operand_stack.push(value),
+                            }
                         }
                     } else {
                         panic!("invokestatic must refer to a MethodRef");

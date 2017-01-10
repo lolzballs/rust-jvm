@@ -44,5 +44,5 @@ fn main() {
     };
 
     let method = class.find_method(&main_symref);
-    method.invoke(&class);
+    method.invoke(&class, None);
 }

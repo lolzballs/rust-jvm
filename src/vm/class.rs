@@ -81,7 +81,7 @@ impl Class {
         match self.methods.get(&clinit_sig) {
             None => (),
             Some(ref method) => {
-                let _ = method.invoke(&self);
+                let _ = method.invoke(&self, None);
             }
         }
     }
@@ -139,11 +139,22 @@ impl Method {
         }
     }
 
-    pub fn invoke(&self, class: &Class) {
-        let frame = super::frame::Frame::new(class,
-                                             &*self.code.code,
-                                             vec![None; self.code.max_locals as usize]);
-        frame.run();
+    pub fn invoke(&self, class: &Class, args_opt: Option<Vec<Value>>) -> Option<Value> {
+        let max_locals = self.code.max_locals as usize;
+        let mut locals = Vec::with_capacity(max_locals);
+        match args_opt {
+            Some(args) => {
+                for value in args {
+                    locals.push(Some(value));
+                }
+            }
+            None => (),
+        }
+        while locals.len() < max_locals {
+            locals.push(None);
+        }
+        let frame = super::frame::Frame::new(class, &*self.code.code, locals);
+        frame.run()
     }
 }
 

@@ -53,6 +53,10 @@ impl ConstantPool {
                 Constant::Long { value } => {
                     Some(ConstantPoolEntry::Literal(Value::Long(Wrapping(value))))
                 }
+                Constant::Float { value } => Some(ConstantPoolEntry::Literal(Value::Float(value))),
+                Constant::Double { value } => {
+                    Some(ConstantPoolEntry::Literal(Value::Double(value)))
+                }
                 Constant::NameAndType { .. } => None,
                 Constant::Utf8 { .. } => {
                     let symref = Self::force_string(constant);
