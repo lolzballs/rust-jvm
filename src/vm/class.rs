@@ -2,7 +2,7 @@ use super::super::model;
 use super::sig;
 use super::symref;
 use super::ConstantPool;
-use super::Value;
+use super::value::Value;
 
 use std::collections::HashMap;
 use std::cell::RefCell;

@@ -1,12 +1,16 @@
 use super::class::Class;
 use super::constant_pool::ConstantPoolEntry;
 use super::opcode;
-use super::Value;
+use super::sig;
+use super::value;
+use super::value::Value;
 
+use std::cell::RefCell;
 use std::f32;
 use std::f64;
 use std::fmt;
 use std::num::Wrapping;
+use std::rc::Rc;
 
 pub struct Frame<'a> {
     class: &'a Class,
@@ -66,7 +70,7 @@ impl<'a> Frame<'a> {
         }
 
         macro_rules! pop {
-            () => (self.operand_stack.pop().unwrap());
+            () => (self.operand_stack.pop().unwrap_or_else(|| panic!("{:#?}", self)));
             ($value_variant: path) => ({
                 match pop!() {
                     $value_variant(v) => v,
@@ -831,6 +835,26 @@ impl<'a> Frame<'a> {
                     } else {
                         panic!("invokestatic must refer to a MethodRef");
                     }
+                }
+                // TODO: A bunch of stuff
+                opcode::NEWARRAY => {
+                    let atype = match self.read_u8() {
+                        4 => sig::Type::Boolean,
+                        5 => sig::Type::Char,
+                        6 => sig::Type::Float,
+                        7 => sig::Type::Double,
+                        8 => sig::Type::Byte,
+                        9 => sig::Type::Short,
+                        10 => sig::Type::Int,
+                        11 => sig::Type::Long,
+                        _ => panic!("Unknown array type"),
+                    };
+                    let count = pop!(Value::Int).0;
+
+                    // TODO: when classloader is implemented, create an array class
+                    // let class = sig::Class::Array(Box::new(atype));
+                    let array = value::Array::new(atype, count);
+                    push!(Value::ArrayReference(Rc::new(RefCell::new(array))));
                 }
                 _ => {
                     println!("{:#?}", self);

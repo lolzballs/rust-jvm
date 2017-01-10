@@ -1,3 +1,6 @@
+use std::num::Wrapping;
+use super::value::Value;
+
 #[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub enum Type {
     Char,
@@ -42,6 +45,18 @@ impl Type {
             _ => {
                 panic!("Unknown type: {}", type_str);
             }
+        }
+    }
+
+    pub fn get_default(&self) -> Value {
+        match *self {
+            Type::Byte | Type::Char | Type::Short | Type::Int | Type::Boolean => {
+                Value::Int(Wrapping(0))
+            }
+            Type::Float => Value::Float(0.0),
+            Type::Double => Value::Double(0.0),
+            Type::Long => Value::Long(Wrapping(0)),
+            Type::Reference(_) => Value::NullReference,
         }
     }
 }

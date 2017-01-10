@@ -1,7 +1,7 @@
 use std::ops::Index;
 use std::num::Wrapping;
 
-use super::Value;
+use super::value::Value;
 use super::symref;
 use super::sig;
 
