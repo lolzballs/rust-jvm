@@ -48,6 +48,11 @@ impl<'a> Frame<'a> {
         ((self.read_u8() as u16) << 8) | (self.read_u8() as u16)
     }
 
+    pub fn read_u32(&mut self) -> u32 {
+        ((self.read_u8() as u32) << 24) | ((self.read_u8() as u32) << 16) |
+        ((self.read_u8() as u32) << 8) | (self.read_u8() as u32)
+    }
+
     pub fn run(mut self) -> Option<Value> {
         macro_rules! push {
             ($v: expr) => ({
@@ -712,6 +717,31 @@ impl<'a> Frame<'a> {
                     let pc = self.pc - 1; // pc is incremented for each byte read
                     let offset = self.read_u16() as i16;
                     branch!(pc, offset);
+                }
+                opcode::JSR => {
+                    panic!("JSR is not supported in this jvm");
+                }
+                opcode::RET => {
+                    panic!("RET is not supported in this jvm");
+                }
+                opcode::TABLESWITCH => {
+                    let pc = self.pc - 1;
+                    // Align
+                    while self.pc % 4 != 0 {
+                        self.pc += 1;
+                    }
+                    let default = self.read_u32();
+                    let low = self.read_u32();
+                    let high = self.read_u32();
+
+                    let offsets = vec![0 as u32; (high - low + 1) as usize];
+                    let index = pop!(Value::Int);
+
+                    if index < low || index > high {
+                        branch!(pc, default);
+                    } else {
+                        branch!(pc, index - low);
+                    }
                 }
                 opcode::INVOKESTATIC => {
                     let index = self.read_u16();
