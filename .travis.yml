@@ -5,3 +5,7 @@ rust:
 matrix:
     allow_failures:
         rust: nightly
+notifications:
+    email:
+        on_success: change
+        on_failure: change
