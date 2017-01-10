@@ -5,15 +5,26 @@ use super::Value;
 
 use std::f32;
 use std::f64;
+use std::fmt;
 use std::num::Wrapping;
 
-#[derive(Debug)]
 pub struct Frame<'a> {
     class: &'a Class,
     code: &'a [u8],
     pc: u16,
     local_variables: Vec<Option<Value>>,
     operand_stack: Vec<Value>,
+}
+
+impl<'a> fmt::Debug for Frame<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("Frame")
+            .field("code", &self.code)
+            .field("pc", &self.pc)
+            .field("local_variables", &self.local_variables)
+            .field("operand_stack", &self.operand_stack)
+            .finish()
+    }
 }
 
 impl<'a> Frame<'a> {
@@ -76,6 +87,12 @@ impl<'a> Frame<'a> {
             });
         }
 
+        macro_rules! branch {
+            ($pc: expr, $offset: expr) => ({
+                self.pc = $pc + $offset;
+            });
+        }
+
         loop {
             match self.read_u8() {
                 opcode::NOP => (),
@@ -134,6 +151,8 @@ impl<'a> Frame<'a> {
                 opcode::ASTORE_1 => store!(1),
                 opcode::ISTORE_2 | opcode::LSTORE_2 | opcode::FSTORE_2 | opcode::DSTORE_2 |
                 opcode::ASTORE_2 => store!(2),
+                opcode::ISTORE_3 | opcode::LSTORE_3 | opcode::FSTORE_3 | opcode::DSTORE_3 |
+                opcode::ASTORE_3 => store!(3),
                 // TODO: Array stuff
                 opcode::POP => {
                     pop!();
@@ -590,6 +609,48 @@ impl<'a> Frame<'a> {
                         push!(Value::Double(-1.0));
                     } else {
                         push!(Value::Double(0.0));
+                    }
+                }
+                opcode::IFEQ => {
+                    let pc = self.pc - 1; // pc is incremented for each byte read
+                    let offset = self.read_u16();
+                    if pop!(Value::Int) == Wrapping(0) {
+                        branch!(pc, offset);
+                    }
+                }
+                opcode::IFNE => {
+                    let pc = self.pc - 1; // pc is incremented for each byte read
+                    let offset = self.read_u16();
+                    if pop!(Value::Int) != Wrapping(0) {
+                        branch!(pc, offset);
+                    }
+                }
+                opcode::IFLT => {
+                    let pc = self.pc - 1; // pc is incremented for each byte read
+                    let offset = self.read_u16();
+                    if pop!(Value::Int) < Wrapping(0) {
+                        branch!(pc, offset);
+                    }
+                }
+                opcode::IFGE => {
+                    let pc = self.pc - 1; // pc is incremented for each byte read
+                    let offset = self.read_u16();
+                    if pop!(Value::Int) >= Wrapping(0) {
+                        branch!(pc, offset);
+                    }
+                }
+                opcode::IFGT => {
+                    let pc = self.pc - 1; // pc is incremented for each byte read
+                    let offset = self.read_u16();
+                    if pop!(Value::Int) > Wrapping(0) {
+                        branch!(pc, offset);
+                    }
+                }
+                opcode::IFLE => {
+                    let pc = self.pc - 1; // pc is incremented for each byte read
+                    let offset = self.read_u16();
+                    if pop!(Value::Int) <= Wrapping(0) {
+                        branch!(pc, offset);
                     }
                 }
                 opcode::INVOKESTATIC => {
