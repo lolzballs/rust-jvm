@@ -99,7 +99,13 @@ impl Class {
 
     pub fn find_method(&self, method_symref: &symref::Method) -> &Method {
         self.initialize();
-        self.methods.get(&method_symref.sig).unwrap()
+        self.methods
+            .get(&method_symref.sig)
+            .unwrap_or_else(|| {
+                panic!("{:?} is not in this class({:?})",
+                       method_symref.sig,
+                       &self.symref.sig)
+            })
     }
 
     pub fn get_field(&self, field_symref: &symref::Field) -> Value {
