@@ -2,10 +2,10 @@
 
 extern crate rust_jvm;
 
-use self::rust_jvm::model::Class;
-use self::rust_jvm::model::info::Constant;
 use std::fs::File;
 use std::io::Read;
+use rust_jvm::model::Class;
+use rust_jvm::model::info::Constant;
 
 #[test]
 fn test_load_class() {
