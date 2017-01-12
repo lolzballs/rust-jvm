@@ -1,3 +1,4 @@
+use super::ClassLoader;
 use super::ConstantPool;
 use super::frame;
 use super::super::model;
@@ -65,7 +66,7 @@ impl Class {
         }
     }
 
-    pub fn initialize(&self) {
+    pub fn initialize(&self, class_loader: &mut ClassLoader) {
         // Initialize all the field_values
         let run_clinit = match *self.field_values.borrow() {
             None => true,
@@ -87,7 +88,7 @@ impl Class {
             match self.methods.get(&clinit_sig) {
                 None => (),
                 Some(ref method) => {
-                    let _ = method.invoke(&self, None);
+                    let _ = method.invoke(&self, class_loader, None);
                 }
             }
         }
@@ -97,8 +98,11 @@ impl Class {
         &self.constant_pool
     }
 
-    pub fn find_method(&self, method_symref: &symref::Method) -> &Method {
-        self.initialize();
+    pub fn find_method(&self,
+                       class_loader: &mut ClassLoader,
+                       method_symref: &symref::Method)
+                       -> &Method {
+        self.initialize(class_loader);
         self.methods
             .get(&method_symref.sig)
             .unwrap_or_else(|| {
@@ -108,16 +112,19 @@ impl Class {
             })
     }
 
-    pub fn get_field(&self, field_symref: &symref::Field) -> Value {
-        self.initialize();
+    pub fn get_field(&self, class_loader: &mut ClassLoader, field_symref: &symref::Field) -> Value {
+        self.initialize(class_loader);
         let map_opt = self.field_values.borrow();
         let map = map_opt.as_ref().unwrap();
         map.get(&field_symref.sig).unwrap().clone()
         // TODO: Superclass stuff
     }
 
-    pub fn put_field(&self, field_symref: &symref::Field, value: Value) {
-        self.initialize();
+    pub fn put_field(&self,
+                     class_loader: &mut ClassLoader,
+                     field_symref: &symref::Field,
+                     value: Value) {
+        self.initialize(class_loader);
         let mut map_opt = self.field_values.borrow_mut();
         let mut map = map_opt.as_mut().unwrap();
         map.insert(field_symref.sig.clone(), value);
@@ -155,7 +162,11 @@ impl Method {
         }
     }
 
-    pub fn invoke(&self, class: &Class, args_opt: Option<Vec<Value>>) -> Option<Value> {
+    pub fn invoke(&self,
+                  class: &Class,
+                  class_loader: &mut ClassLoader,
+                  args_opt: Option<Vec<Value>>)
+                  -> Option<Value> {
         let max_locals = self.code.max_locals as usize;
         let mut locals = Vec::with_capacity(max_locals);
         match args_opt {
@@ -170,7 +181,7 @@ impl Method {
             locals.push(None);
         }
         let frame = frame::Frame::new(class, &*self.code.code, locals);
-        frame.run()
+        frame.run(class_loader)
     }
 }
 

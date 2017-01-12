@@ -13,7 +13,7 @@ impl Runtime {
 
     pub fn start(mut self, main_class: symref::Class) {
         let class = self.bootstrap_class_loader.resolve_class(&main_class.sig);
-        class.initialize();
+        class.initialize(&mut self.bootstrap_class_loader);
 
         let string_ty = sig::Type::Reference(sig::Class::Scalar(String::from("java/lang/String")));
         let string_array_ty = sig::Type::Reference(sig::Class::Array(Box::new(string_ty)));
@@ -26,7 +26,7 @@ impl Runtime {
             class: class.symref.clone(),
             sig: main_sig,
         };
-        let method = class.find_method(&main_symref);
-        method.invoke(&class, None);
+        let method = class.find_method(&mut self.bootstrap_class_loader, &main_symref);
+        method.invoke(&class, &mut self.bootstrap_class_loader, None);
     }
 }

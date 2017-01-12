@@ -1,4 +1,5 @@
 use super::class::Class;
+use super::class_loader::ClassLoader;
 use super::constant_pool::ConstantPoolEntry;
 use super::opcode;
 use super::sig;
@@ -62,7 +63,7 @@ impl<'a> Frame<'a> {
         self.operand_stack.drain(start..).collect()
     }
 
-    pub fn run(mut self) -> Option<Value> {
+    pub fn run(mut self, class_loader: &mut ClassLoader) -> Option<Value> {
         macro_rules! push {
             ($v: expr) => ({
                 self.operand_stack.push($v);
@@ -806,7 +807,7 @@ impl<'a> Frame<'a> {
                     if let Some(ConstantPoolEntry::FieldRef(ref symref)) =
                         self.class.get_constant_pool()[index] {
                         // TODO: resolve class of field and get field from that class
-                        let value = self.class.get_field(symref);
+                        let value = self.class.get_field(class_loader, symref);
                         push!(value);
                     } else {
                         panic!("GETSTATIC {} must point to a FieldRef", index);
@@ -818,7 +819,7 @@ impl<'a> Frame<'a> {
                         self.class.get_constant_pool()[index] {
                         let value = pop!();
                         // TODO: resolve class of field and get field from that class
-                        self.class.put_field(symref, value);
+                        self.class.put_field(class_loader, symref, value);
                     } else {
                         panic!("PUTSTATIC {} must point to a FieldRef", index);
                     }
@@ -830,14 +831,15 @@ impl<'a> Frame<'a> {
                     if let Some(ConstantPoolEntry::MethodRef(ref symref)) =
                         self.class.get_constant_pool()[index] {
                         // TODO: resolve class of method and get method from that class
-                        let method = self.class.find_method(symref);
+                        let owning_class = class_loader.resolve_class(&symref.class.sig);
+                        let method = owning_class.find_method(class_loader, symref);
                         let num_args = symref.sig.params.len();
                         let args = self.pop_count(num_args);
                         // TODO: Remove this
                         if symref.sig.name == "println" {
                             println!("{:?}", args);
                         } else {
-                            let result = method.invoke(self.class, Some(args));
+                            let result = method.invoke(self.class, class_loader, Some(args));
                             match result {
                                 None => (),
                                 Some(value) => self.operand_stack.push(value),

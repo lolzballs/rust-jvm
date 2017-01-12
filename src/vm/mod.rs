@@ -9,5 +9,6 @@ pub mod sig;
 pub mod symref;
 pub mod value;
 
+pub use self::class_loader::ClassLoader;
 pub use self::constant_pool::ConstantPool;
 pub use self::runtime::Runtime;

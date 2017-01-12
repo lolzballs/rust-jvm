@@ -11,6 +11,7 @@ use std::io::Read;
 use std::fs::File;
 use std::rc::Rc;
 
+#[derive(Debug)]
 pub struct ClassLoader {
     classes: HashMap<sig::Class, Rc<class::Class>>,
 }
