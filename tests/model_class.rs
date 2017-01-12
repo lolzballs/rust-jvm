@@ -9,7 +9,7 @@ use std::io::Read;
 
 #[test]
 fn test_load_class() {
-    let mut file = File::open("test_data/model_class.class").unwrap();
+    let mut file = File::open("test_data/model_class/Test.class").unwrap();
     let mut buf = Vec::new();
     file.read_to_end(&mut buf);
 
