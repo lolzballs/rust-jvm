@@ -1,13 +1,10 @@
-extern crate byteorder;
+extern crate rust_jvm;
 
-mod model;
-mod vm;
-
-use vm::Runtime;
+use rust_jvm::vm;
 
 fn main() {
     let class_file = std::env::args().nth(1).unwrap();
 
-    let runtime = Runtime::new();
+    let runtime = vm::Runtime::new();
     runtime.start(vm::symref::Class { sig: vm::sig::Class::Scalar(class_file) });
 }

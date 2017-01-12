@@ -1,5 +1,5 @@
 [package]
-name = "rust-jvm"
+name = "rust_jvm"
 version = "0.1.0"
 authors = ["Benjamin Cheng <ben@bcheng.cf>"]
 
