@@ -839,7 +839,8 @@ impl<'a> Frame<'a> {
                         if symref.sig.name == "println" {
                             println!("{:?}", args);
                         } else {
-                            let result = method.invoke(self.class, class_loader, Some(args));
+                            let result =
+                                method.invoke(owning_class.as_ref(), class_loader, Some(args));
                             match result {
                                 None => (),
                                 Some(value) => self.operand_stack.push(value),
