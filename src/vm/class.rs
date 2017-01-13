@@ -66,6 +66,24 @@ impl Class {
         }
     }
 
+    pub fn new_array(component: sig::Type) -> Self {
+        // TODO: Length field, access flags
+        let sig = sig::Class::Array(Box::new(component));
+        let symref = symref::Class { sig: sig };
+
+        let constant_pool: Vec<model::info::Constant> = Vec::new();
+        // TODO: Optimize this
+        Class {
+            symref: symref,
+            access_flags: 0,
+            superclass: None,
+            constant_pool: ConstantPool::new(&constant_pool.into_boxed_slice()),
+            methods: HashMap::new(),
+            field_constants: HashMap::new(),
+            field_values: RefCell::new(None),
+        }
+    }
+
     pub fn initialize(&self, class_loader: &mut ClassLoader) {
         // Initialize all the field_values
         let run_clinit = match *self.field_values.borrow() {

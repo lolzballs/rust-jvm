@@ -3,6 +3,7 @@ use super::class_loader::ClassLoader;
 use super::constant_pool::ConstantPoolEntry;
 use super::opcode;
 use super::sig;
+use super::symref;
 use super::value;
 use super::value::Value;
 
@@ -863,11 +864,12 @@ impl<'a> Frame<'a> {
                         11 => sig::Type::Long,
                         _ => panic!("Unknown array type"),
                     };
+
                     let count = pop!(Value::Int).0;
 
-                    // TODO: when classloader is implemented, create an array class
-                    // let class = sig::Class::Array(Box::new(atype));
-                    let array = value::Array::new(atype, count);
+                    let class_sig = sig::Class::Array(Box::new(atype));
+                    let class = class_loader.resolve_class(&class_sig);
+                    let array = value::Array::new(class, count);
                     push!(Value::ArrayReference(Rc::new(RefCell::new(array))));
                 }
                 _ => {

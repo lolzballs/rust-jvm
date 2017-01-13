@@ -65,7 +65,9 @@ impl ClassLoader {
                 let class_bytes = Self::find_class_bytes(name).unwrap();
                 self.load_class_bytes(sig, class_bytes)
             }
-            _ => panic!("Unimplemented"),
+            sig::Class::Array(ref component) => {
+                Rc::new(class::Class::new_array(*component.clone()))
+            }
         }
     }
 }

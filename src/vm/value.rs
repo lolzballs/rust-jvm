@@ -36,18 +36,23 @@ impl Scalar {
 
 #[derive(Debug)]
 pub struct Array {
-    component: sig::Type,
+    class: Rc<Class>,
     array: Vec<Value>,
 }
 
 impl Array {
-    pub fn new(component: sig::Type, size: i32) -> Self {
+    pub fn new(class: Rc<Class>, size: i32) -> Self {
         let mut array = Vec::with_capacity(size as usize);
-        for _ in 0..size {
-            array.push(component.get_default());
+        match class.symref.sig {
+            sig::Class::Array(ref component) => {
+                for _ in 0..size {
+                    array.push(component.get_default());
+                }
+            }
+            sig::Class::Scalar(_) => panic!("Array classes cannot be Scalar!"),
         }
         Array {
-            component: component,
+            class: class,
             array: array,
         }
     }
