@@ -112,7 +112,7 @@ impl<'a> Frame<'a> {
         loop {
             match self.read_u8() {
                 opcode::NOP => (),
-                // opcode::ACONST_NULL => push!(Value::NullReference),
+                opcode::ACONST_NULL => push!(Value::NullReference),
                 opcode::ICONST_M1 => push!(Value::Int(Wrapping(-1))),
                 opcode::ICONST_0 => push!(Value::Int(Wrapping(0))),
                 opcode::ICONST_1 => push!(Value::Int(Wrapping(1))),
