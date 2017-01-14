@@ -1,3 +1,5 @@
+//! Various info types which are specified by the JVM specification
+
 pub mod attribute;
 pub mod constant;
 pub mod field;

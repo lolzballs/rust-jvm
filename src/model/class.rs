@@ -1,3 +1,5 @@
+//! A JVM ClassFile representation
+
 use std::io::Cursor;
 
 use super::info::{Attribute, Constant, Field, Method};

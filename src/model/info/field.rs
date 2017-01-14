@@ -1,3 +1,5 @@
+//! Represents a JVM field_info structure, which describes a field.
+
 use std::io::Cursor;
 
 use super::{Attribute, Constant};

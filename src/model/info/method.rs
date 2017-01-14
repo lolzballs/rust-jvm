@@ -1,3 +1,5 @@
+//! Represents a JVM method_info structure, which describes a method.
+
 use std::io::Cursor;
 
 use super::{Attribute, Constant};
@@ -17,11 +19,18 @@ const ACC_ABSTRACT: u16 = 0x0400;
 const ACC_STRICT: u16 = 0x0800;
 const ACC_SYNTHETIC: u16 = 0x1000;
 
+/// The `Method` type represents a method_info, which describes a method.
 #[derive(Debug)]
 pub struct Method {
+    /// A mask of flags used to denote access permission to and properties of this method.
     pub access_flags: u16,
+    /// The index to the item in the containing `ClassFile`s constant pool which contains
+    /// the method's name. The `Constant` should be of type `Constant::Utf8`.
     pub name_index: u16,
+    /// The index to the item in the containing `ClassFile`s constant pool which contains
+    /// the method's descriptor. The `Constant` should be of type `Constant::Utf8`.
     pub descriptor_index: u16,
+    /// The number of attributes that this `Method` contains.
     attributes_count: u16,
     pub attributes: Box<[Attribute]>,
 }

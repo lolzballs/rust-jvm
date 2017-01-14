@@ -1,3 +1,6 @@
+//! Represents a JVM attribute structure, and is used in the
+//! `ClassFile`, `field_info`, `method_info`, and `Code_attribute` structures
+
 use std::io::{Cursor, Read};
 
 use super::Constant;
