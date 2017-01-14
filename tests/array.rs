@@ -10,8 +10,10 @@ use rust_jvm::vm::value::Value;
 
 #[test]
 fn test_fibonacci() {
+    std::env::set_current_dir("test_data/array");
+
     let mut class_loader = ClassLoader::new();
-    let class = class_loader.resolve_class(&sig::Class::Scalar(String::from("Fibonacci")));
+    let class = class_loader.resolve_class(&sig::Class::Scalar(String::from("Fib")));
 
     let sig = sig::Method {
         name: String::from("fib"),
@@ -27,5 +29,9 @@ fn test_fibonacci() {
     let method = class.find_method(&mut class_loader, &symref);
     let mut args = vec![];
     args.push(Value::Int(Wrapping(10)));
-    method.invoke(&class, &mut class_loader, Some(args));
+    let ret = method.invoke(&class, &mut class_loader, Some(args)).unwrap();
+    match ret {
+        Value::Int(value) => assert_eq!(value.0, 55),
+        _ => panic!("Expected Int with value 55, got {:?}", ret),
+    }
 }
