@@ -852,6 +852,16 @@ impl<'a> Frame<'a> {
                     }
                 }
                 // TODO: A bunch of stuff
+                opcode::NEW => {
+                    let index = pop!(Value::Int).0 as u16;
+                    if let Some(ConstantPoolEntry::ClassRef(ref symref)) =
+                        self.class.get_constant_pool()[index] {
+                        let class = class_loader.resolve_class(&symref.sig);
+                        push!(Value::Reference(Rc::new(RefCell::new(value::Scalar::new(class)))));
+                    } else {
+                        panic!("new must refer to a ClassRef");
+                    }
+                }
                 opcode::NEWARRAY => {
                     let atype = match self.read_u8() {
                         4 => sig::Type::Boolean,
