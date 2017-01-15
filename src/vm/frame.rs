@@ -808,8 +808,8 @@ impl<'a> Frame<'a> {
                     let index = self.read_u16();
                     if let Some(ConstantPoolEntry::FieldRef(ref symref)) =
                         self.class.get_constant_pool()[index] {
-                        // TODO: resolve class of field and get field from that class
-                        let value = self.class.get_field(class_loader, symref);
+                        let owning_class = class_loader.resolve_class(&symref.class.sig);
+                        let value = owning_class.get_field(class_loader, symref);
                         push!(value);
                     } else {
                         panic!("GETSTATIC {} must point to a FieldRef", index);
@@ -820,8 +820,8 @@ impl<'a> Frame<'a> {
                     if let Some(ConstantPoolEntry::FieldRef(ref symref)) =
                         self.class.get_constant_pool()[index] {
                         let value = pop!();
-                        // TODO: resolve class of field and get field from that class
-                        self.class.put_field(class_loader, symref, value);
+                        let owning_class = class_loader.resolve_class(&symref.class.sig);
+                        owning_class.put_field(class_loader, symref, value);
                     } else {
                         panic!("PUTSTATIC {} must point to a FieldRef", index);
                     }
@@ -882,7 +882,6 @@ impl<'a> Frame<'a> {
                     let index = self.read_u16();
                     if let Some(ConstantPoolEntry::MethodRef(ref symref)) =
                         self.class.get_constant_pool()[index] {
-                        // TODO: resolve class of method and get method from that class
                         let owning_class = class_loader.resolve_class(&symref.class.sig);
                         let method = owning_class.find_method(class_loader, symref);
                         let num_args = symref.sig.params.len();
