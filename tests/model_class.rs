@@ -9,10 +9,12 @@ use rust_jvm::model::info::Constant;
 
 #[test]
 fn test_load_class() {
-    std::env::set_current_dir("test_data/model_class");
+    let res = std::env::set_current_dir("test_data/model_class");
+    assert!(res.is_ok());
+
     let mut file = File::open("Test.class").unwrap();
     let mut buf = Vec::new();
-    file.read_to_end(&mut buf);
+    assert!(file.read_to_end(&mut buf).is_ok());
 
     let class = Class::new(buf);
     println!("{:#?}", class);

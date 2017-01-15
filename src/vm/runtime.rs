@@ -2,13 +2,15 @@ use super::class_loader::ClassLoader;
 use super::sig;
 use super::symref;
 
+use std::path::PathBuf;
+
 pub struct Runtime {
     bootstrap_class_loader: ClassLoader,
 }
 
 impl Runtime {
-    pub fn new() -> Self {
-        Runtime { bootstrap_class_loader: ClassLoader::new() }
+    pub fn new(runtime_path: PathBuf) -> Self {
+        Runtime { bootstrap_class_loader: ClassLoader::new(runtime_path) }
     }
 
     pub fn start(mut self, main_class: symref::Class) {

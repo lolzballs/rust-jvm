@@ -9,24 +9,47 @@ use std::error::Error;
 use std::io;
 use std::io::Read;
 use std::fs::File;
+use std::path::{Path, PathBuf};
 use std::rc::Rc;
 
 #[derive(Debug)]
 pub struct ClassLoader {
+    runtime_path: PathBuf,
     classes: HashMap<sig::Class, Rc<class::Class>>,
 }
 
 impl ClassLoader {
-    pub fn new() -> ClassLoader {
-        ClassLoader { classes: HashMap::new() }
+    pub fn new(runtime_path: PathBuf) -> ClassLoader {
+        ClassLoader {
+            runtime_path: runtime_path,
+            classes: HashMap::new(),
+        }
     }
 
-    fn find_class_bytes(name: &str) -> Result<Vec<u8>, io::Error> {
-        File::open(String::from(name) + ".class").and_then(|mut file| {
-            let mut buf = Vec::new();
-            file.read_to_end(&mut buf);
-            Ok(buf)
-        })
+    fn find_class_bytes(&self, name: &str) -> Result<Vec<u8>, &'static str> {
+        let path = PathBuf::from(String::from(name) + ".class");
+        if path.exists() {
+            File::open(path)
+                .and_then(|mut file| {
+                    let mut buf = Vec::new();
+                    file.read_to_end(&mut buf);
+                    Ok(buf)
+                })
+                .or(Err("Could not load class"))
+        } else {
+            let rt_path = self.runtime_path.join(String::from(name) + ".class");
+            if rt_path.exists() {
+                File::open(rt_path)
+                    .and_then(|mut file| {
+                        let mut buf = Vec::new();
+                        file.read_to_end(&mut buf);
+                        Ok(buf)
+                    })
+                    .or(Err("Could not load class"))
+            } else {
+                Err("Class not found")
+            }
+        }
     }
 
     fn load_class_bytes(&mut self, sig: &sig::Class, bytes: Vec<u8>) -> Rc<class::Class> {
@@ -62,7 +85,7 @@ impl ClassLoader {
 
         match *sig {
             sig::Class::Scalar(ref name) => {
-                let class_bytes = Self::find_class_bytes(name).unwrap();
+                let class_bytes = self.find_class_bytes(name).unwrap();
                 self.load_class_bytes(sig, class_bytes)
             }
             sig::Class::Array(ref component) => {
