@@ -3,7 +3,6 @@ use super::class_loader::ClassLoader;
 use super::constant_pool::ConstantPoolEntry;
 use super::opcode;
 use super::sig;
-use super::symref;
 use super::value;
 use super::value::Value;
 

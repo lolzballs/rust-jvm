@@ -5,11 +5,9 @@ use super::symref;
 use super::constant_pool::{ConstantPool, ConstantPoolEntry};
 
 use std::collections::HashMap;
-use std::error::Error;
-use std::io;
 use std::io::Read;
 use std::fs::File;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::rc::Rc;
 
 #[derive(Debug)]
@@ -32,7 +30,7 @@ impl ClassLoader {
             File::open(path)
                 .and_then(|mut file| {
                     let mut buf = Vec::new();
-                    file.read_to_end(&mut buf);
+                    try!(file.read_to_end(&mut buf));
                     Ok(buf)
                 })
                 .or(Err("Could not load class"))
@@ -42,7 +40,7 @@ impl ClassLoader {
                 File::open(rt_path)
                     .and_then(|mut file| {
                         let mut buf = Vec::new();
-                        file.read_to_end(&mut buf);
+                        try!(file.read_to_end(&mut buf));
                         Ok(buf)
                     })
                     .or(Err("Could not load class"))
