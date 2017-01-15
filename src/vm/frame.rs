@@ -99,6 +99,7 @@ impl<'a> Frame<'a> {
         macro_rules! load {
             ($index: expr) => ({
                 let local = self.local_variables[$index as usize].clone().unwrap();
+                //println!("{:?}", self.operand_stack);
                 push!(local);
             });
         }
@@ -825,7 +826,57 @@ impl<'a> Frame<'a> {
                         panic!("PUTSTATIC {} must point to a FieldRef", index);
                     }
                 }
-                // TODO: GETFIELD and PUTFIELD
+                opcode::GETFIELD => {
+                    let index = self.read_u16();
+                    if let Some(ConstantPoolEntry::FieldRef(ref symref)) =
+                        self.class.get_constant_pool()[index] {
+                        match pop!() {
+                            Value::Reference(object) => {
+                                let value = object.borrow().get_field(&symref.sig);
+                                push!(value);
+                            }
+                            v => panic!("TODO: Some kind of implementation for this: {:?}", v),
+                        }
+                    } else {
+                        panic!("GETFIELD {} must point to a FieldRef", index);
+                    }
+                }
+                opcode::PUTFIELD => {
+                    let index = self.read_u16();
+                    if let Some(ConstantPoolEntry::FieldRef(ref symref)) =
+                        self.class.get_constant_pool()[index] {
+                        let value = pop!();
+                        match pop!() {
+                            Value::Reference(object) => {
+                                object.borrow_mut().put_field(symref.sig.clone(), value);
+                            }
+                            v => panic!("TODO: Some kind of implementation for this: {:?}", v),
+                        }
+                    } else {
+                        panic!("PUTFIELD {} must point to a FieldRef", index);
+                    }
+                }
+                opcode::INVOKESPECIAL => {
+                    let index = self.read_u16();
+                    if let Some(ConstantPoolEntry::MethodRef(ref symref)) =
+                        self.class.get_constant_pool()[index] {
+                        // println!("{:?}", self.local_variables);
+                        let num_args = symref.sig.params.len();
+                        let args = self.pop_count(num_args + 1); // include objectref
+
+                        let owning_class = class_loader.resolve_class(&symref.class.sig);
+                        let method = owning_class.find_method(class_loader, symref);
+                        println!("Invoking: {:?}", method);
+
+                        let result = method.invoke(owning_class.as_ref(), class_loader, Some(args));
+                        match result {
+                            None => (),
+                            Some(value) => push!(value),
+                        }
+                    } else {
+                        panic!("invokespecial must refer to a MethodRef");
+                    }
+                }
                 // TODO: INVOKEVIRTUAL and INVOKESPECIAL
                 opcode::INVOKESTATIC => {
                     let index = self.read_u16();
@@ -844,7 +895,7 @@ impl<'a> Frame<'a> {
                                 method.invoke(owning_class.as_ref(), class_loader, Some(args));
                             match result {
                                 None => (),
-                                Some(value) => self.operand_stack.push(value),
+                                Some(value) => push!(value),
                             }
                         }
                     } else {
@@ -853,7 +904,7 @@ impl<'a> Frame<'a> {
                 }
                 // TODO: A bunch of stuff
                 opcode::NEW => {
-                    let index = pop!(Value::Int).0 as u16;
+                    let index = self.read_u16();
                     if let Some(ConstantPoolEntry::ClassRef(ref symref)) =
                         self.class.get_constant_pool()[index] {
                         let class = class_loader.resolve_class(&symref.sig);

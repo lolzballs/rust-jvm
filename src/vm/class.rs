@@ -6,7 +6,7 @@ use super::sig;
 use super::symref;
 use super::value::Value;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::cell::RefCell;
 
 #[derive(Debug)]
@@ -16,6 +16,7 @@ pub struct Class {
     pub superclass: Option<Box<Class>>,
     constant_pool: ConstantPool,
     methods: HashMap<sig::Method, Method>,
+    fields: HashMap<sig::Field, u16>,
     field_constants: HashMap<sig::Field, u16>,
     field_values: RefCell<Option<HashMap<sig::Field, Value>>>,
 }
@@ -26,12 +27,14 @@ impl Class {
                constant_pool: ConstantPool,
                class: model::class::Class)
                -> Self {
+        let mut fields = HashMap::new();
         let mut field_constants = HashMap::new();
         for field_info in class.fields.iter() {
             let name = constant_pool.lookup_utf8(field_info.name_index);
             let ty = sig::Type::new(constant_pool.lookup_utf8(field_info.descriptor_index))
                 .unwrap();
             let sig = sig::Field::new(name.clone(), ty);
+            fields.insert(sig.clone(), field_info.access_flags);
             // If the field is static, add to field_constants
             if field_info.access_flags & model::info::field::ACC_STATIC != 0 {
                 for attr in field_info.attributes.iter() {
@@ -61,6 +64,7 @@ impl Class {
             superclass: superclass,
             constant_pool: constant_pool,
             methods: methods,
+            fields: fields,
             field_constants: field_constants,
             field_values: RefCell::new(None),
         }
@@ -79,6 +83,7 @@ impl Class {
             superclass: None,
             constant_pool: ConstantPool::new(&constant_pool.into_boxed_slice()),
             methods: HashMap::new(),
+            fields: HashMap::new(),
             field_constants: HashMap::new(),
             field_values: RefCell::new(None),
         }
@@ -114,6 +119,17 @@ impl Class {
 
     pub fn get_constant_pool(&self) -> &ConstantPool {
         &self.constant_pool
+    }
+
+    pub fn collect_instance_fields(&self) -> HashSet<sig::Field> {
+        // TODO: Superclass fields
+        let mut fields = HashSet::new();
+        for (sig, access_flags) in &self.fields {
+            if access_flags & model::info::field::ACC_STATIC == 0 {
+                fields.insert(sig.clone());
+            }
+        }
+        fields
     }
 
     pub fn find_method(&self,

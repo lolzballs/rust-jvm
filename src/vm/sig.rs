@@ -119,8 +119,8 @@ impl Method {
 
 #[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub struct Field {
-    name: String,
-    ty: Type,
+    pub name: String,
+    pub ty: Type,
 }
 
 impl Field {

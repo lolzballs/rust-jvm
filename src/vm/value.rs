@@ -25,12 +25,30 @@ pub struct Scalar {
 
 impl Scalar {
     pub fn new(class: Rc<Class>) -> Self {
-        let fields = HashMap::new();
-        // TODO: load instance fields
-        Scalar {
-            class: class,
-            fields: fields,
+        match class.symref.sig {
+            sig::Class::Scalar(_) => {
+                let field_sigs = class.collect_instance_fields();
+                let mut fields = HashMap::new();
+                // TODO: load instance fields
+                for field in field_sigs {
+                    let value = field.ty.get_default();
+                    fields.insert(field, value);
+                }
+                Scalar {
+                    class: class,
+                    fields: fields,
+                }
+            }
+            _ => panic!("Scalar value must be a scalar class"),
         }
+    }
+
+    pub fn put_field(&mut self, sig: sig::Field, value: Value) {
+        self.fields.insert(sig, value);
+    }
+
+    pub fn get_field(&self, sig: &sig::Field) -> Value {
+        self.fields.get(sig).unwrap().clone()
     }
 }
 
