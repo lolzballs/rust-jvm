@@ -855,17 +855,35 @@ impl<'a> Frame<'a> {
                         panic!("PUTFIELD {} must point to a FieldRef", index);
                     }
                 }
-                opcode::INVOKESPECIAL => {
+                opcode::INVOKEVIRTUAL => {
+                    // TODO: Polymorphic invokevirtual
                     let index = self.read_u16();
                     if let Some(ConstantPoolEntry::MethodRef(ref symref)) =
                         self.class.get_constant_pool()[index] {
-                        // println!("{:?}", self.local_variables);
                         let num_args = symref.sig.params.len();
                         let args = self.pop_count(num_args + 1); // include objectref
 
                         let owning_class = class_loader.resolve_class(&symref.class.sig);
                         let method = owning_class.find_method(class_loader, symref);
-                        println!("Invoking: {:?}", method);
+
+                        let result = method.invoke(owning_class.as_ref(), class_loader, Some(args));
+                        match result {
+                            None => (),
+                            Some(value) => push!(value),
+                        }
+                    } else {
+                        panic!("invokevirtual must refer to a MethodRef");
+                    }
+                }
+                opcode::INVOKESPECIAL => {
+                    let index = self.read_u16();
+                    if let Some(ConstantPoolEntry::MethodRef(ref symref)) =
+                        self.class.get_constant_pool()[index] {
+                        let num_args = symref.sig.params.len();
+                        let args = self.pop_count(num_args + 1); // include objectref
+
+                        let owning_class = class_loader.resolve_class(&symref.class.sig);
+                        let method = owning_class.find_method(class_loader, symref);
 
                         let result = method.invoke(owning_class.as_ref(), class_loader, Some(args));
                         match result {
@@ -876,7 +894,6 @@ impl<'a> Frame<'a> {
                         panic!("invokespecial must refer to a MethodRef");
                     }
                 }
-                // TODO: INVOKEVIRTUAL and INVOKESPECIAL
                 opcode::INVOKESTATIC => {
                     let index = self.read_u16();
                     if let Some(ConstantPoolEntry::MethodRef(ref symref)) =
