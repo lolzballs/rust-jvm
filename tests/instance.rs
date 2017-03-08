@@ -30,7 +30,7 @@ fn test_instance() {
         sig: sig,
     };
 
-    let method = class.find_method(&mut class_loader, &symref);
+    let method = class.find_method(&mut class_loader, &symref).borrow();
     let mut args = vec![];
     args.push(Value::Int(Wrapping(69)));
     let ret = method.invoke(&class, &mut class_loader, Some(args)).unwrap();
