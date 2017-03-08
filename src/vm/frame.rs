@@ -866,7 +866,8 @@ impl<'a> Frame<'a> {
                         let owning_class = class_loader.resolve_class(&symref.class.sig);
                         let method = owning_class.find_method(class_loader, symref);
 
-                        let result = method.invoke(owning_class.as_ref(), class_loader, Some(args));
+                        let result = method.borrow()
+                            .invoke(owning_class.as_ref(), class_loader, Some(args));
                         match result {
                             None => (),
                             Some(value) => push!(value),
@@ -885,7 +886,8 @@ impl<'a> Frame<'a> {
                         let owning_class = class_loader.resolve_class(&symref.class.sig);
                         let method = owning_class.find_method(class_loader, symref);
 
-                        let result = method.invoke(owning_class.as_ref(), class_loader, Some(args));
+                        let result = method.borrow()
+                            .invoke(owning_class.as_ref(), class_loader, Some(args));
                         match result {
                             None => (),
                             Some(value) => push!(value),
@@ -902,16 +904,11 @@ impl<'a> Frame<'a> {
                         let method = owning_class.find_method(class_loader, symref);
                         let num_args = symref.sig.params.len();
                         let args = self.pop_count(num_args);
-                        // TODO: Remove this
-                        if symref.sig.name == "println" {
-                            println!("{:?}", args);
-                        } else {
-                            let result =
-                                method.invoke(owning_class.as_ref(), class_loader, Some(args));
-                            match result {
-                                None => (),
-                                Some(value) => push!(value),
-                            }
+                        let result = method.borrow()
+                            .invoke(owning_class.as_ref(), class_loader, Some(args));
+                        match result {
+                            None => (),
+                            Some(value) => push!(value),
                         }
                     } else {
                         panic!("invokestatic must refer to a MethodRef");

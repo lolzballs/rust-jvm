@@ -156,8 +156,10 @@ impl ConstantPool {
     pub fn resolve_literal(&self, index: u16) -> &Value {
         match self.entries[(index - 1) as usize] {
             Some(ConstantPoolEntry::Literal(ref value)) => value,
-            _ => {
-                panic!("Item at index {} must be ConstantPoolEntry::Literal", index);
+            ref value => {
+                panic!("Item at index {} must be ConstantPoolEntry::Literal found {:?}",
+                       index,
+                       value);
             }
         }
     }

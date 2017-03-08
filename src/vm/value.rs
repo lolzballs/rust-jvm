@@ -7,6 +7,7 @@ use std::num::Wrapping;
 use std::rc::Rc;
 
 #[derive(Clone, Debug)]
+#[repr(C)]
 pub enum Value {
     Int(Wrapping<i32>),
     Float(f32),

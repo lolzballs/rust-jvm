@@ -4,6 +4,7 @@ pub mod constant_pool;
 pub mod frame;
 #[allow(dead_code)]
 pub mod opcode;
+pub mod native;
 pub mod runtime;
 pub mod sig;
 pub mod symref;

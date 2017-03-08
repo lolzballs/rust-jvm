@@ -2,12 +2,16 @@ use super::ClassLoader;
 use super::ConstantPool;
 use super::frame;
 use super::super::model;
+use super::native;
 use super::sig;
 use super::symref;
 use super::value::Value;
 
+use lib::{Library, Symbol};
+
 use std::collections::{HashMap, HashSet};
 use std::cell::RefCell;
+use std::rc::Rc;
 
 #[derive(Debug)]
 pub struct Class {
@@ -15,7 +19,7 @@ pub struct Class {
     pub access_flags: u16,
     pub superclass: Option<Box<Class>>,
     constant_pool: ConstantPool,
-    methods: HashMap<sig::Method, Method>,
+    methods: HashMap<sig::Method, RefCell<Method>>,
     fields: HashMap<sig::Field, u16>,
     field_constants: HashMap<sig::Field, u16>,
     field_values: RefCell<Option<HashMap<sig::Field, Value>>>,
@@ -26,7 +30,7 @@ impl Class {
                superclass: Option<Box<Class>>,
                constant_pool: ConstantPool,
                class: model::class::Class)
-               -> Self {
+               -> (Self, Vec<sig::Method>) {
         let mut fields = HashMap::new();
         let mut field_constants = HashMap::new();
         for field_info in class.fields.iter() {
@@ -46,28 +50,35 @@ impl Class {
         }
 
         let mut methods = HashMap::new();
+        let mut unbound_natives = Vec::new();
         for method_info in class.methods.iter() {
             let name = constant_pool.lookup_utf8(method_info.name_index);
             let descriptor = constant_pool.lookup_utf8(method_info.descriptor_index);
             let sig = sig::Method::new(name.clone(), descriptor.clone());
+
             let method = Method::new(symref::Method {
                                          class: symref.clone(),
                                          sig: sig.clone(),
                                      },
                                      method_info);
 
-            methods.insert(sig, method);
+            methods.insert(sig.clone(), RefCell::new(method));
+
+            if method_info.access_flags & model::info::method::ACC_NATIVE != 0 {
+                unbound_natives.push(sig);
+            }
         }
-        Class {
-            symref: symref,
-            access_flags: 0,
-            superclass: superclass,
-            constant_pool: constant_pool,
-            methods: methods,
-            fields: fields,
-            field_constants: field_constants,
-            field_values: RefCell::new(None),
-        }
+        (Class {
+             symref: symref,
+             access_flags: 0,
+             superclass: superclass,
+             constant_pool: constant_pool,
+             methods: methods,
+             fields: fields,
+             field_constants: field_constants,
+             field_values: RefCell::new(None),
+         },
+         unbound_natives)
     }
 
     pub fn new_array(component: sig::Type) -> Self {
@@ -96,6 +107,7 @@ impl Class {
             Some(_) => false,
         };
         if run_clinit {
+
             let mut field_values = HashMap::new();
             for (sig, index) in &self.field_constants {
                 let value = self.constant_pool.resolve_literal(*index);
@@ -111,10 +123,15 @@ impl Class {
             match self.methods.get(&clinit_sig) {
                 None => (),
                 Some(ref method) => {
-                    let _ = method.invoke(&self, class_loader, None);
+                    let _ = method.borrow().invoke(&self, class_loader, None);
                 }
             }
         }
+    }
+
+    pub fn bind_native_method(&self, sig: sig::Method, library: Rc<Library>) {
+        let mut method = self.methods.get(&sig).unwrap().borrow_mut();
+        method.bind_native(library);
     }
 
     pub fn get_constant_pool(&self) -> &ConstantPool {
@@ -135,7 +152,7 @@ impl Class {
     pub fn find_method(&self,
                        class_loader: &mut ClassLoader,
                        method_symref: &symref::Method)
-                       -> &Method {
+                       -> &RefCell<Method> {
         self.initialize(class_loader);
         self.methods
             .get(&method_symref.sig)
@@ -174,21 +191,26 @@ pub struct Method {
 
 impl Method {
     pub fn new(symref: symref::Method, info: &model::info::Method) -> Self {
-        let method_code = info.attributes
-            .iter()
-            .fold(None, |code, attr| {
-                code.or(match *attr {
-                    model::info::Attribute::Code { max_locals, ref code, .. } => {
-                        Some(MethodCode {
-                            max_locals: max_locals,
-                            code: code.clone(),
+        let method_code = {
+            if info.access_flags & model::info::method::ACC_NATIVE != 0 {
+                MethodCode::UnresolvedNative
+            } else {
+                info.attributes
+                    .iter()
+                    .fold(None, |code, attr| {
+                        code.or(match *attr {
+                            model::info::Attribute::Code { max_locals, ref code, .. } => {
+                                Some(MethodCode::Java {
+                                    max_locals: max_locals,
+                                    code: code.clone(),
+                                })
+                            }
+                            _ => None,
                         })
-                    }
-                    _ => None,
-                })
-            })
-            .unwrap();
-
+                    })
+                    .unwrap()
+            }
+        };
         Method {
             symref: symref,
             access_flags: info.access_flags,
@@ -196,31 +218,43 @@ impl Method {
         }
     }
 
+    pub fn bind_native(&mut self, lib: Rc<Library>) {
+        println!("{:?}", self);
+        self.code = MethodCode::Native(lib);
+    }
+
     pub fn invoke(&self,
                   class: &Class,
                   class_loader: &mut ClassLoader,
                   args_opt: Option<Vec<Value>>)
                   -> Option<Value> {
-        let max_locals = self.code.max_locals as usize;
-        let mut locals = Vec::with_capacity(max_locals);
-        match args_opt {
-            Some(args) => {
-                for value in args {
-                    locals.push(Some(value));
+        match self.code {
+            MethodCode::Native(ref lib) => native::invoke(&lib.clone(), &self.symref, args_opt),
+            MethodCode::UnresolvedNative => panic!("{:?} native not loaded!", self.symref.sig),
+            MethodCode::Java { max_locals, ref code } => {
+                let max_locals = max_locals as usize;
+                let mut locals = Vec::with_capacity(max_locals);
+                match args_opt {
+                    Some(args) => {
+                        for value in args {
+                            locals.push(Some(value));
+                        }
+                    }
+                    None => (),
                 }
+                while locals.len() < max_locals {
+                    locals.push(None);
+                }
+                let frame = frame::Frame::new(class, &*code, locals);
+                frame.run(class_loader)
             }
-            None => (),
         }
-        while locals.len() < max_locals {
-            locals.push(None);
-        }
-        let frame = frame::Frame::new(class, &*self.code.code, locals);
-        frame.run(class_loader)
     }
 }
 
 #[derive(Debug)]
-struct MethodCode {
-    max_locals: u16,
-    code: Box<[u8]>,
+enum MethodCode {
+    Native(Rc<Library>),
+    UnresolvedNative,
+    Java { max_locals: u16, code: Box<[u8]> },
 }

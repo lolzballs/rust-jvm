@@ -1,8 +1,11 @@
 use super::class;
+use super::native;
 use super::super::model;
 use super::sig;
 use super::symref;
 use super::constant_pool::{ConstantPool, ConstantPoolEntry};
+
+use lib::{Library, Symbol};
 
 use std::collections::HashMap;
 use std::io::Read;
@@ -14,6 +17,9 @@ use std::rc::Rc;
 pub struct ClassLoader {
     runtime_path: PathBuf,
     classes: HashMap<sig::Class, Rc<class::Class>>,
+
+    natives: Vec<Rc<Library>>,
+    unbound_natives: Vec<symref::Method>,
 }
 
 impl ClassLoader {
@@ -21,6 +27,8 @@ impl ClassLoader {
         ClassLoader {
             runtime_path: runtime_path,
             classes: HashMap::new(),
+            natives: Vec::new(),
+            unbound_natives: Vec::new(),
         }
     }
 
@@ -66,12 +74,53 @@ impl ClassLoader {
         };
         if sigs_match {
             let symref = symref::Class { sig: sig.clone() };
-            let class = class::Class::new(symref, None, rcp, model);
+            let (mut class, unbound_natives) = class::Class::new(symref.clone(), None, rcp, model);
+
+            for method in unbound_natives {
+                let method_symref = symref::Method {
+                    class: symref.clone(),
+                    sig: method.clone(),
+                };
+                let lib = self.natives
+                    .iter()
+                    .find(|lib| native::has_method(&lib, &method_symref.clone()));
+                if lib.is_some() {
+                    class.bind_native_method(method, lib.unwrap().clone());
+                } else {
+                    self.unbound_natives.push(method_symref);
+                }
+            }
+
+
             let rc = Rc::new(class);
             self.classes.insert(sig.clone(), rc.clone());
             rc
         } else {
             panic!("Class signature mismatch: given {:?}", sig);
+        }
+    }
+
+    pub fn load_library(&mut self, path: &str) {
+        self.natives.push(Rc::new(native::load(path)));
+        self.bind_native_methods();
+    }
+
+    pub fn bind_native_methods(&mut self) {
+        let natives = self.natives.clone();
+        let mut to_bind: HashMap<symref::Method, Rc<Library>> = HashMap::new();
+        self.unbound_natives.retain(|method| {
+            let lib = natives.iter().find(|lib| native::has_method(&lib, &method));
+            if lib.is_some() {
+                to_bind.insert(method.clone(), lib.unwrap().clone());
+                true
+            } else {
+                false
+            }
+        });
+
+        for (method, lib) in to_bind {
+            let mut class = self.resolve_class(&method.class.sig);
+            class.bind_native_method(method.sig, lib.clone());
         }
     }
 
