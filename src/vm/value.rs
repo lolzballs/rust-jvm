@@ -76,6 +76,16 @@ impl Array {
         }
     }
 
+    pub fn copy_from(&mut self, other: Rc<RefCell<Array>>, src: i32, dst: i32, len: i32) {
+        let other = other.borrow();
+        self.array.truncate(dst as usize);
+        self.array.extend(other.array[src as usize..(src + len) as usize].iter().cloned());
+    }
+
+    pub fn len(&self) -> i32 {
+        self.array.len() as i32
+    }
+
     pub fn get(&self, index: usize) -> Value {
         self.array[index].clone()
     }

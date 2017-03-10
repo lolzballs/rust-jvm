@@ -71,7 +71,7 @@ impl<'a> Frame<'a> {
         }
 
         macro_rules! pop {
-            () => (self.operand_stack.pop().unwrap_or_else(|| panic!("{:#?}", self)));
+            () => (self.operand_stack.pop().unwrap_or_else(|| panic!("{:?}", self.code)));
             ($value_variant: path) => ({
                 match pop!() {
                     $value_variant(v) => v,
@@ -137,11 +137,17 @@ impl<'a> Frame<'a> {
                 }
                 opcode::LDC => {
                     let index = self.read_u8();
-                    push!(self.class.get_constant_pool().resolve_literal(index as u16).clone());
+                    push!(self.class
+                        .get_constant_pool()
+                        .resolve_literal(index as u16, class_loader)
+                        .clone());
                 }
                 opcode::LDC_W | opcode::LDC2_W => {
                     let index = self.read_u16();
-                    push!(self.class.get_constant_pool().resolve_literal(index).clone());
+                    push!(self.class
+                        .get_constant_pool()
+                        .resolve_literal(index, class_loader)
+                        .clone());
                 }
                 opcode::ILOAD | opcode::LLOAD | opcode::FLOAD | opcode::DLOAD | opcode::ALOAD => {
                     let index = self.read_u8();
@@ -945,8 +951,12 @@ impl<'a> Frame<'a> {
                     let array = value::Array::new(class, count);
                     push!(Value::ArrayReference(Rc::new(RefCell::new(array))));
                 }
+                opcode::ARRAYLENGTH => {
+                    let array_ref = pop!(Value::ArrayReference);
+                    push!(Value::Int(Wrapping(array_ref.borrow().len())));
+                }
                 _ => {
-                    println!("{:#?}", self);
+                    println!("{:#?}", self.class);
                     panic!("Unknown instruction at pc {}", self.pc);
                 }
             }

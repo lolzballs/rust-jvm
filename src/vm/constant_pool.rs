@@ -1,7 +1,10 @@
+use std::cell::RefCell;
 use std::ops::Index;
 use std::num::Wrapping;
+use std::rc::Rc;
 
-use super::value::Value;
+use super::class_loader::ClassLoader;
+use super::value::{Array, Scalar, Value};
 use super::symref;
 use super::sig;
 
@@ -153,9 +156,57 @@ impl ConstantPool {
         }
     }
 
-    pub fn resolve_literal(&self, index: u16) -> &Value {
+    pub fn resolve_literal(&self, index: u16, class_loader: &mut ClassLoader) -> Value {
         match self.entries[(index - 1) as usize] {
-            Some(ConstantPoolEntry::Literal(ref value)) => value,
+            Some(ConstantPoolEntry::Literal(ref value)) => value.clone(),
+            Some(ConstantPoolEntry::UnresolvedString(value)) => {
+                let array_sig = sig::Class::Array(Box::new(sig::Type::Char));
+                let array_symref = symref::Class { sig: array_sig.clone() };
+                let array_class = class_loader.resolve_class(&array_sig);
+
+                let chars = {
+                    if let Some(ConstantPoolEntry::StringValue(ref string)) =
+                        self.entries[(value - 1) as usize] {
+                        string.clone().into_bytes()
+                    } else {
+                        panic!("UnresolvedString {} must point to a StringValue", value);
+                    }
+                };
+
+                // CONVERT TO UTF-8
+                let mut array = Array::new(array_class, chars.len() as i32);
+                let mut i = 0;
+                for c in chars {
+                    array.insert(i, Value::Int(Wrapping(c as i32)));
+                    i += 1;
+                }
+                let array_rc = Rc::new(RefCell::new(array));
+
+                let string_sig = sig::Class::Scalar(String::from("java/lang/String"));
+                let string_symref = symref::Class { sig: string_sig.clone() };
+                let string_class = class_loader.resolve_class(&string_sig);
+                let string = Scalar::new(string_class.clone());
+                let string_rc = Rc::new(RefCell::new(string));
+
+                let constructor_sig = sig::Method {
+                    name: String::from("<init>"),
+                    params: vec![sig::Type::Reference(array_sig.clone())],
+                    return_type: None,
+                };
+                let constructor_symref = symref::Method {
+                    class: string_symref,
+                    sig: constructor_sig,
+                };
+                let constructor = string_class.find_method(class_loader, &constructor_symref);
+                let args = Some(vec![Value::Reference(string_rc.clone()),
+                                     Value::ArrayReference(array_rc)]);
+                let result = constructor.borrow().invoke(string_class.as_ref(), class_loader, args);
+                match result {
+                    None => (),
+                    Some(_) => panic!("<init> returned a value"),
+                }
+                Value::Reference(string_rc)
+            }
             ref value => {
                 panic!("Item at index {} must be ConstantPoolEntry::Literal found {:?}",
                        index,

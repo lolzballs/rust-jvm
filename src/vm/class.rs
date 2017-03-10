@@ -110,7 +110,7 @@ impl Class {
 
             let mut field_values = HashMap::new();
             for (sig, index) in &self.field_constants {
-                let value = self.constant_pool.resolve_literal(*index);
+                let value = self.constant_pool.resolve_literal(*index, class_loader);
                 field_values.insert(sig.clone(), value.clone());
             }
             *self.field_values.borrow_mut() = Some(field_values);
