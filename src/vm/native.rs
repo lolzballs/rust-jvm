@@ -5,7 +5,6 @@ use super::value::Value;
 use lib::{Library, Symbol};
 
 use std::ffi::CString;
-use std::io::Result;
 use std::ptr;
 
 pub type JniFn = unsafe fn(usize, *const Value) -> Option<Value>;
@@ -14,7 +13,7 @@ pub fn load(path: &str) -> Library {
     Library::new(path).unwrap()
 }
 
-pub fn get_function_signature(symref: &symref::Method) -> CString {
+fn get_function_signature(symref: &symref::Method) -> CString {
     let mut signature = String::new();
     if let sig::Class::Scalar(ref class_sig) = symref.class.sig {
         for class_segment in class_sig.split("/") {

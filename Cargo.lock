@@ -103,6 +103,7 @@ name = "rjni"
 version = "0.1.0"
 dependencies = [
  "libc 0.2.21 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rust_jvm 0.1.0",
 ]
 
 [[package]]

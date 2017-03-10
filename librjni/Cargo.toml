@@ -8,3 +8,4 @@ crate-type = ["cdylib"]
 
 [dependencies]
 libc = "0.2"
+rust_jvm = { path = "../" }
