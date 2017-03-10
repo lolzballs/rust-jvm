@@ -219,7 +219,6 @@ impl Method {
     }
 
     pub fn bind_native(&mut self, lib: Rc<Library>) {
-        println!("{:?}", self);
         self.code = MethodCode::Native(lib);
     }
 

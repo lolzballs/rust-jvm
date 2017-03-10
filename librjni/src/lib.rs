@@ -66,9 +66,10 @@ pub unsafe extern "C" fn Test_doubleIt(argc: usize, argv: *const Value) -> Optio
                     let test = obj.borrow();
                     test.get_field(&field)
                 };
-                if let Value::Int(Wrapping(val)) = val {
-                    obj.borrow_mut().put_field(field, Value::Int(Wrapping(val * 2)));
+                if let Value::Int(val) = val {
+                    obj.borrow_mut().put_field(field, Value::Int(val * Wrapping(2)));
                 } else {
+                    panic!("Not an int");
                 }
             }
         }
