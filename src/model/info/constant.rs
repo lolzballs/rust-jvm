@@ -68,7 +68,7 @@ impl Constant {
                 let length = cur.read_u16::<BigEndian>().unwrap();
                 let bytes = vec![0 as u8; length as usize];
                 let mut slice = bytes.into_boxed_slice();
-                cur.read_exact(&mut slice);
+                cur.read_exact(&mut slice).unwrap();
                 let bytes = slice.into_vec();
                 Constant::Utf8 {
                     length: length,

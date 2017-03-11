@@ -11,7 +11,7 @@ pub struct Runtime {
 impl Runtime {
     pub fn new(runtime_path: PathBuf) -> Self {
         let mut class_loader = ClassLoader::new(runtime_path);
-        class_loader.load_library("./target/debug/librjni.so");
+        class_loader.load_library("./target/debug/librjni_runtime.so");
         Runtime { bootstrap_class_loader: class_loader }
     }
 

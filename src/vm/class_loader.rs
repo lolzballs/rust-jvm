@@ -5,7 +5,7 @@ use super::sig;
 use super::symref;
 use super::constant_pool::{ConstantPool, ConstantPoolEntry};
 
-use lib::{Library, Symbol};
+use lib::Library;
 
 use std::collections::HashMap;
 use std::io::Read;
@@ -74,7 +74,7 @@ impl ClassLoader {
         };
         if sigs_match {
             let symref = symref::Class { sig: sig.clone() };
-            let (mut class, unbound_natives) = class::Class::new(symref.clone(), None, rcp, model);
+            let (class, unbound_natives) = class::Class::new(symref.clone(), None, rcp, model);
 
             for method in unbound_natives {
                 let method_symref = symref::Method {
@@ -119,7 +119,7 @@ impl ClassLoader {
         });
 
         for (method, lib) in to_bind {
-            let mut class = self.resolve_class(&method.class.sig);
+            let class = self.resolve_class(&method.class.sig);
             class.bind_native_method(method.sig, lib.clone());
         }
     }

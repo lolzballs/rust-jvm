@@ -1,5 +1,5 @@
 [package]
-name = "rjni"
+name = "rjni_runtime"
 version = "0.1.0"
 authors = ["Benjamin Cheng <ben@bcheng.cf>"]
 

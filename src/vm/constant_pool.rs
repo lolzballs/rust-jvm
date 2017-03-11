@@ -161,7 +161,6 @@ impl ConstantPool {
             Some(ConstantPoolEntry::Literal(ref value)) => value.clone(),
             Some(ConstantPoolEntry::UnresolvedString(value)) => {
                 let array_sig = sig::Class::Array(Box::new(sig::Type::Char));
-                let array_symref = symref::Class { sig: array_sig.clone() };
                 let array_class = class_loader.resolve_class(&array_sig);
 
                 let chars = {

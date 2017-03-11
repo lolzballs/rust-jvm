@@ -764,7 +764,7 @@ impl<'a> Frame<'a> {
 
                     let size = (high - low + 1) as usize;
                     let mut offsets = vec![0 as u32; size];
-                    for i in 0..size {
+                    for _ in 0..size {
                         offsets.push(self.read_u32());
                     }
 
@@ -788,7 +788,7 @@ impl<'a> Frame<'a> {
                     let key = pop!(Value::Int).0;
                     let mut found = false;
 
-                    for i in 0..npairs {
+                    for _ in 0..npairs {
                         let case = self.read_u32() as i32;
                         let offset = self.read_u32() as i32;
                         if key == case {

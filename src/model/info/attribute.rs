@@ -56,7 +56,7 @@ impl Attribute {
                 let code_length = cur.read_u32::<BigEndian>().unwrap();
                 let code = vec![0; code_length as usize];
                 let mut slice = code.into_boxed_slice();
-                cur.read_exact(&mut slice);
+                cur.read_exact(&mut slice).unwrap();
 
                 let exception_table_length = cur.read_u16::<BigEndian>().unwrap();
                 let mut exception_table = Vec::with_capacity(exception_table_length as usize);
@@ -90,7 +90,7 @@ impl Attribute {
                 println!("Unknown attribute {}", name);
                 let bytes = vec![0 as u8; length as usize];
                 let mut slice = bytes.into_boxed_slice();
-                cur.read_exact(&mut slice);
+                cur.read_exact(&mut slice).unwrap();
 
                 Attribute::Unknown {
                     name_index: name_index,

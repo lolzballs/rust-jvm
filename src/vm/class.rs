@@ -7,7 +7,7 @@ use super::sig;
 use super::symref;
 use super::value::Value;
 
-use lib::{Library, Symbol};
+use lib::Library;
 
 use std::collections::{HashMap, HashSet};
 use std::cell::RefCell;
