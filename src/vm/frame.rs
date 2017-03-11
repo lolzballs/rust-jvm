@@ -497,7 +497,6 @@ impl<'a> Frame<'a> {
                         }
                         _ => panic!("Cannot IINC on non-integer at index: {}", index),
                     };
-                    println!("{:?}", self.local_variables);
                 }
                 opcode::I2L => {
                     match pop!() {
