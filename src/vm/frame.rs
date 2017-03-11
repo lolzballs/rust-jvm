@@ -389,7 +389,7 @@ impl<'a> Frame<'a> {
                 opcode::DDIV => {
                     let val2 = pop!(Value::Double);
                     let val1 = pop!(Value::Double);
-                    push!(Value::Double(val1 % val2));
+                    push!(Value::Double(val1 / val2));
                 }
                 opcode::IREM => {
                     let val2 = pop!(Value::Int);
@@ -497,6 +497,7 @@ impl<'a> Frame<'a> {
                         }
                         _ => panic!("Cannot IINC on non-integer at index: {}", index),
                     };
+                    println!("{:?}", self.local_variables);
                 }
                 opcode::I2L => {
                     match pop!() {
@@ -910,6 +911,7 @@ impl<'a> Frame<'a> {
                         let method = owning_class.find_method(class_loader, symref);
                         let num_args = symref.sig.params.len();
                         let args = self.pop_count(num_args);
+
                         let result = method.borrow()
                             .invoke(owning_class.as_ref(), class_loader, Some(args));
                         match result {

@@ -16,7 +16,12 @@ public class System {
         write((byte) '\n');
     }
 
-    public static void println(int i) {
-        System.println("FUCK");
+    public static void println(int n) {
+        int length = (int) (Math.log10(n) + 1);
+        for (int i = length - 1; i >= 0; i--) {
+            int dig = (int) (((float) n / Math.pow(10, i)) % 10);
+            write((byte) ((byte) '0' + dig));
+        }
+        write((byte) '\n');
     }
 }
