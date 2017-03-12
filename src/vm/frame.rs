@@ -956,9 +956,9 @@ impl<'a> Frame<'a> {
                     let array_ref = pop!(Value::ArrayReference);
                     push!(Value::Int(Wrapping(array_ref.borrow().len())));
                 }
-                _ => {
+                ins => {
                     println!("{:#?}", self.class);
-                    panic!("Unknown instruction at pc {}", self.pc);
+                    panic!("Unknown instruction at pc {}: {:X}", self.pc, ins);
                 }
             }
         }
