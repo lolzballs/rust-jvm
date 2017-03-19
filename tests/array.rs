@@ -12,10 +12,7 @@ const RUNTIME_PATH: &'static str = concat!(env!("OUT_DIR"), "/runtime");
 
 #[test]
 fn test_fibonacci() {
-    let res = std::env::set_current_dir("test_data/array");
-    assert!(res.is_ok());
-
-    let mut class_loader = ClassLoader::new(RUNTIME_PATH.into());
+    let mut class_loader = ClassLoader::new(vec!["test_data/array".into(), RUNTIME_PATH.into()]);
     let class = class_loader.resolve_class(&sig::Class::Scalar(String::from("Fib")));
 
     let sig = sig::Method {
