@@ -60,7 +60,8 @@ impl ConstantPool {
                 Constant::Double { value } => {
                     Some(ConstantPoolEntry::Literal(Value::Double(value)))
                 }
-                Constant::NameAndType { .. } => None,
+                Constant::NameAndType { .. } |
+                Constant::Nothing => None,
                 Constant::Utf8 { .. } => {
                     let symref = Self::force_string(constant);
                     Some(ConstantPoolEntry::StringValue(symref.clone()))
@@ -68,7 +69,6 @@ impl ConstantPool {
                 Constant::String { string_index } => {
                     Some(ConstantPoolEntry::UnresolvedString(string_index))
                 }
-                Constant::Nothing => None,
                 _ => {
                     panic!("Unimplemented constant: {:#?}", constant);
                 }
@@ -82,7 +82,7 @@ impl ConstantPool {
         match *info {
             Constant::Class { name_index } => {
                 let name = Self::force_string(&constant_pool[(name_index - 1) as usize]);
-                symref::Class { sig: sig::Class::new(&name) }
+                symref::Class { sig: sig::Class::new(name) }
             }
             _ => {
                 panic!("Constant {:?} must be Constant::Class", info);
@@ -93,10 +93,10 @@ impl ConstantPool {
     fn force_method_ref(constant_pool: &Box<[Constant]>, info: &Constant) -> symref::Method {
         match *info {
             Constant::Methodref { class_index, name_and_type_index } => {
-                let class = Self::force_class_ref(&constant_pool,
+                let class = Self::force_class_ref(constant_pool,
                                                   &constant_pool[(class_index - 1) as usize]);
                 let (name, descriptor) =
-                    Self::force_name_and_type(&constant_pool,
+                    Self::force_name_and_type(constant_pool,
                                               &constant_pool[(name_and_type_index - 1) as usize]);
                 symref::Method {
                     class: class,
@@ -112,10 +112,10 @@ impl ConstantPool {
     fn force_field_ref(constant_pool: &Box<[Constant]>, info: &Constant) -> symref::Field {
         match *info {
             Constant::Fieldref { class_index, name_and_type_index } => {
-                let class = Self::force_class_ref(&constant_pool,
+                let class = Self::force_class_ref(constant_pool,
                                                   &constant_pool[(class_index - 1) as usize]);
                 let (name, descriptor) =
-                    Self::force_name_and_type(&constant_pool,
+                    Self::force_name_and_type(constant_pool,
                                               &constant_pool[(name_and_type_index - 1) as usize]);
 
                 let (name, descriptor) = (name.clone(), descriptor.clone());
@@ -174,10 +174,8 @@ impl ConstantPool {
 
                 // CONVERT TO UTF-8
                 let mut array = Array::new(array_class, chars.len() as i32);
-                let mut i = 0;
-                for c in chars {
-                    array.insert(i, Value::Int(Wrapping(c as i32)));
-                    i += 1;
+                for (i, c) in chars.iter().enumerate() {
+                    array.insert(i, Value::Int(Wrapping(*c as i32)));
                 }
                 let array_rc = Rc::new(RefCell::new(array));
 

@@ -21,7 +21,7 @@ impl Type {
     }
 
     fn new_partial(type_str: &str) -> (Option<Self>, usize) {
-        let (specifier, mut rem) = type_str.split_at(1);
+        let (specifier, rem) = type_str.split_at(1);
         match specifier {
             "C" => (Some(Type::Char), 1),
             "B" => (Some(Type::Byte), 1),
@@ -33,14 +33,13 @@ impl Type {
             "Z" => (Some(Type::Boolean), 1),
             "L" => {
                 let end = rem.find(';').unwrap();
-                let (name, rem) = rem.split_at(end);
+                let (name, _) = rem.split_at(end);
                 (Some(Type::Reference(Class::new(name))), end + 2)
             }
             "V" => (None, 1),
             "[" => {
                 let (ty, len) = Self::new_partial(rem);
                 let array_type = Type::Reference(Class::Array(Box::new(ty.unwrap())));
-                rem = rem.split_at(len).1;
                 (Some(array_type), len + 1)
             }
             _ => {

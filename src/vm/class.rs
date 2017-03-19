@@ -122,15 +122,15 @@ impl Class {
             };
             match self.methods.get(&clinit_sig) {
                 None => (),
-                Some(ref method) => {
-                    let _ = method.borrow().invoke(&self, class_loader, None);
+                Some(method) => {
+                    let _ = method.borrow().invoke(self, class_loader, None);
                 }
             }
         }
     }
 
     pub fn bind_native_method(&self, sig: sig::Method, library: Rc<Library>) {
-        let mut method = self.methods.get(&sig).unwrap().borrow_mut();
+        let mut method = self.methods[&sig].borrow_mut();
         method.bind_native(library);
     }
 
@@ -233,13 +233,10 @@ impl Method {
             MethodCode::Java { max_locals, ref code } => {
                 let max_locals = max_locals as usize;
                 let mut locals = Vec::with_capacity(max_locals);
-                match args_opt {
-                    Some(args) => {
-                        for value in args {
-                            locals.push(Some(value));
-                        }
+                if let Some(args) = args_opt {
+                    for value in args {
+                        locals.push(Some(value));
                     }
-                    None => (),
                 }
                 while locals.len() < max_locals {
                     locals.push(None);

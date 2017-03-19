@@ -18,7 +18,7 @@ fn test_load_class() {
 
     let class = Class::new(buf);
     println!("{:#?}", class);
-    let ref constant = class.constant_pool[7 as usize];
+    let constant = &class.constant_pool[7 as usize];
     match *constant {
         Constant::Long { value } => assert_eq!(value, 12312312i64),
         _ => panic!("Expected Long with value 12312312, got {:?}", constant),

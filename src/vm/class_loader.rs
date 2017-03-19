@@ -87,7 +87,6 @@ impl ClassLoader {
                 }
             }
 
-
             let rc = Rc::new(class);
             self.classes.insert(sig.clone(), rc.clone());
             rc
@@ -105,7 +104,7 @@ impl ClassLoader {
         let natives = self.natives.clone();
         let mut to_bind: HashMap<symref::Method, Rc<Library>> = HashMap::new();
         self.unbound_natives.retain(|method| {
-            let lib = natives.iter().find(|lib| native::has_method(&lib, &method));
+            let lib = natives.iter().find(|lib| native::has_method(lib, method));
             if lib.is_some() {
                 to_bind.insert(method.clone(), lib.unwrap().clone());
                 true
@@ -121,7 +120,7 @@ impl ClassLoader {
     }
 
     pub fn resolve_class(&mut self, sig: &sig::Class) -> Rc<class::Class> {
-        if let Some(class) = self.classes.get(&sig) {
+        if let Some(class) = self.classes.get(sig) {
             // the class has been resolved
             return class.clone();
         }

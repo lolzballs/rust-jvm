@@ -49,7 +49,7 @@ impl Scalar {
     }
 
     pub fn get_field(&self, sig: &sig::Field) -> Value {
-        self.fields.get(sig).unwrap().clone()
+        self.fields[sig].clone()
     }
 }
 

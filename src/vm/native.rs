@@ -16,7 +16,7 @@ pub fn load(path: &str) -> Library {
 fn get_function_signature(symref: &symref::Method) -> CString {
     let mut signature = String::new();
     if let sig::Class::Scalar(ref class_sig) = symref.class.sig {
-        for class_segment in class_sig.split("/") {
+        for class_segment in class_sig.split('/') {
             signature.push_str(class_segment);
             signature.push_str("_");
         }
@@ -27,7 +27,7 @@ fn get_function_signature(symref: &symref::Method) -> CString {
 
     signature.push_str(symref.sig.name.replace("_", "1_").as_str());
 
-    return CString::new(signature).unwrap();
+    CString::new(signature).unwrap()
 }
 
 pub fn has_method(lib: &Library, symref: &symref::Method) -> bool {

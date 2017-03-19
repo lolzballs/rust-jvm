@@ -603,7 +603,7 @@ impl<'a> Frame<'a> {
                 opcode::FCMPL => {
                     let val2 = pop!(Value::Float);
                     let val1 = pop!(Value::Float);
-                    if val1 == f32::NAN || val2 == f32::NAN || val1 < val2 {
+                    if val1.is_nan() || val2.is_nan() || val1 < val2 {
                         push!(Value::Float(-1.0));
                     } else if val1 > val2 {
                         push!(Value::Float(1.0));
@@ -614,7 +614,7 @@ impl<'a> Frame<'a> {
                 opcode::FCMPG => {
                     let val2 = pop!(Value::Float);
                     let val1 = pop!(Value::Float);
-                    if val1 == f32::NAN || val2 == f32::NAN || val1 > val2 {
+                    if val1.is_nan() || val2.is_nan() || val1 > val2 {
                         push!(Value::Float(1.0));
                     } else if val1 < val2 {
                         push!(Value::Float(-1.0));
@@ -625,7 +625,7 @@ impl<'a> Frame<'a> {
                 opcode::DCMPL => {
                     let val2 = pop!(Value::Double);
                     let val1 = pop!(Value::Double);
-                    if val1 == f64::NAN || val2 == f64::NAN || val1 < val2 {
+                    if val1.is_nan() || val2.is_nan() || val1 < val2 {
                         push!(Value::Double(-1.0));
                     } else if val1 > val2 {
                         push!(Value::Double(1.0));
@@ -636,7 +636,7 @@ impl<'a> Frame<'a> {
                 opcode::DCMPG => {
                     let val2 = pop!(Value::Double);
                     let val1 = pop!(Value::Double);
-                    if val1 == f64::NAN || val2 == f64::NAN || val1 > val2 {
+                    if val1.is_nan() || val2.is_nan() || val1 > val2 {
                         push!(Value::Double(1.0));
                     } else if val1 < val2 {
                         push!(Value::Double(-1.0));
@@ -647,42 +647,48 @@ impl<'a> Frame<'a> {
                 opcode::IFEQ => {
                     let pc = self.pc - 1; // pc is incremented for each byte read
                     let offset = self.read_u16() as i16;
-                    if pop!(Value::Int) == Wrapping(0) {
+                    let pop = pop!(Value::Int);
+                    if pop == Wrapping(0) {
                         branch!(pc, offset);
                     }
                 }
                 opcode::IFNE => {
                     let pc = self.pc - 1; // pc is incremented for each byte read
                     let offset = self.read_u16() as i16;
-                    if pop!(Value::Int) != Wrapping(0) {
+                    let pop = pop!(Value::Int);
+                    if pop != Wrapping(0) {
                         branch!(pc, offset);
                     }
                 }
                 opcode::IFLT => {
                     let pc = self.pc - 1; // pc is incremented for each byte read
                     let offset = self.read_u16() as i16;
-                    if pop!(Value::Int) < Wrapping(0) {
+                    let pop = pop!(Value::Int);
+                    if pop < Wrapping(0) {
                         branch!(pc, offset);
                     }
                 }
                 opcode::IFGE => {
                     let pc = self.pc - 1; // pc is incremented for each byte read
                     let offset = self.read_u16() as i16;
-                    if pop!(Value::Int) >= Wrapping(0) {
+                    let pop = pop!(Value::Int);
+                    if pop >= Wrapping(0) {
                         branch!(pc, offset);
                     }
                 }
                 opcode::IFGT => {
                     let pc = self.pc - 1; // pc is incremented for each byte read
                     let offset = self.read_u16() as i16;
-                    if pop!(Value::Int) > Wrapping(0) {
+                    let pop = pop!(Value::Int);
+                    if pop > Wrapping(0) {
                         branch!(pc, offset);
                     }
                 }
                 opcode::IFLE => {
                     let pc = self.pc - 1; // pc is incremented for each byte read
                     let offset = self.read_u16() as i16;
-                    if pop!(Value::Int) <= Wrapping(0) {
+                    let pop = pop!(Value::Int);
+                    if pop <= Wrapping(0) {
                         branch!(pc, offset);
                     }
                 }
