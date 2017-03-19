@@ -13,6 +13,7 @@ use std::fmt;
 use std::num::Wrapping;
 use std::rc::Rc;
 
+/// A representation of a [`Method`](../class/struct.Method.html)'s frame.
 pub struct Frame<'a> {
     class: &'a Class,
     code: &'a [u8],
@@ -33,6 +34,7 @@ impl<'a> fmt::Debug for Frame<'a> {
 }
 
 impl<'a> Frame<'a> {
+    /// Creates a new `Frame`.
     pub fn new(class: &'a Class, code: &'a [u8], local_variables: Vec<Option<Value>>) -> Self {
         Frame {
             class: class,
@@ -63,6 +65,10 @@ impl<'a> Frame<'a> {
         self.operand_stack.drain(start..).collect()
     }
 
+    /// Start running the frame.
+    ///
+    /// # Panics
+    /// Panics if `code` does some illegal things, or if there are unknown instructions.
     pub fn run(mut self, class_loader: &mut ClassLoader) -> Option<Value> {
         macro_rules! push {
             ($v: expr) => ({
