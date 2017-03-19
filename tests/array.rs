@@ -2,21 +2,20 @@
 
 extern crate rust_jvm;
 
-use std::fs;
 use std::num::Wrapping;
 use rust_jvm::vm::ClassLoader;
 use rust_jvm::vm::sig;
 use rust_jvm::vm::symref;
 use rust_jvm::vm::value::Value;
 
+const RUNTIME_PATH: &'static str = concat!(env!("OUT_DIR"), "/runtime");
+
 #[test]
 fn test_fibonacci() {
-    let path = fs::canonicalize("./runtime").unwrap();
-
     let res = std::env::set_current_dir("test_data/array");
     assert!(res.is_ok());
 
-    let mut class_loader = ClassLoader::new(path);
+    let mut class_loader = ClassLoader::new(RUNTIME_PATH.into());
     let class = class_loader.resolve_class(&sig::Class::Scalar(String::from("Fib")));
 
     let sig = sig::Method {
