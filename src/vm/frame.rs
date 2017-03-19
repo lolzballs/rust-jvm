@@ -3,7 +3,6 @@ use super::class_loader::ClassLoader;
 use super::constant_pool::ConstantPoolEntry;
 use super::opcode;
 use super::sig;
-use super::symref;
 use super::value;
 use super::value::Value;
 
@@ -72,7 +71,7 @@ impl<'a> Frame<'a> {
         }
 
         macro_rules! pop {
-            () => (self.operand_stack.pop().unwrap_or_else(|| panic!("{:#?}", self)));
+            () => (self.operand_stack.pop().unwrap_or_else(|| panic!("{:?}", self.code)));
             ($value_variant: path) => ({
                 match pop!() {
                     $value_variant(v) => v,
@@ -99,6 +98,7 @@ impl<'a> Frame<'a> {
         macro_rules! load {
             ($index: expr) => ({
                 let local = self.local_variables[$index as usize].clone().unwrap();
+                //println!("{:?}", self.operand_stack);
                 push!(local);
             });
         }
@@ -137,11 +137,17 @@ impl<'a> Frame<'a> {
                 }
                 opcode::LDC => {
                     let index = self.read_u8();
-                    push!(self.class.get_constant_pool().resolve_literal(index as u16).clone());
+                    push!(self.class
+                        .get_constant_pool()
+                        .resolve_literal(index as u16, class_loader)
+                        .clone());
                 }
                 opcode::LDC_W | opcode::LDC2_W => {
                     let index = self.read_u16();
-                    push!(self.class.get_constant_pool().resolve_literal(index).clone());
+                    push!(self.class
+                        .get_constant_pool()
+                        .resolve_literal(index, class_loader)
+                        .clone());
                 }
                 opcode::ILOAD | opcode::LLOAD | opcode::FLOAD | opcode::DLOAD | opcode::ALOAD => {
                     let index = self.read_u8();
@@ -383,7 +389,7 @@ impl<'a> Frame<'a> {
                 opcode::DDIV => {
                     let val2 = pop!(Value::Double);
                     let val1 = pop!(Value::Double);
-                    push!(Value::Double(val1 % val2));
+                    push!(Value::Double(val1 / val2));
                 }
                 opcode::IREM => {
                     let val2 = pop!(Value::Int);
@@ -758,7 +764,7 @@ impl<'a> Frame<'a> {
 
                     let size = (high - low + 1) as usize;
                     let mut offsets = vec![0 as u32; size];
-                    for i in 0..size {
+                    for _ in 0..size {
                         offsets.push(self.read_u32());
                     }
 
@@ -782,7 +788,7 @@ impl<'a> Frame<'a> {
                     let key = pop!(Value::Int).0;
                     let mut found = false;
 
-                    for i in 0..npairs {
+                    for _ in 0..npairs {
                         let case = self.read_u32() as i32;
                         let offset = self.read_u32() as i32;
                         if key == case {
@@ -807,8 +813,8 @@ impl<'a> Frame<'a> {
                     let index = self.read_u16();
                     if let Some(ConstantPoolEntry::FieldRef(ref symref)) =
                         self.class.get_constant_pool()[index] {
-                        // TODO: resolve class of field and get field from that class
-                        let value = self.class.get_field(class_loader, symref);
+                        let owning_class = class_loader.resolve_class(&symref.class.sig);
+                        let value = owning_class.get_field(class_loader, symref);
                         push!(value);
                     } else {
                         panic!("GETSTATIC {} must point to a FieldRef", index);
@@ -819,39 +825,113 @@ impl<'a> Frame<'a> {
                     if let Some(ConstantPoolEntry::FieldRef(ref symref)) =
                         self.class.get_constant_pool()[index] {
                         let value = pop!();
-                        // TODO: resolve class of field and get field from that class
-                        self.class.put_field(class_loader, symref, value);
+                        let owning_class = class_loader.resolve_class(&symref.class.sig);
+                        owning_class.put_field(class_loader, symref, value);
                     } else {
                         panic!("PUTSTATIC {} must point to a FieldRef", index);
                     }
                 }
-                // TODO: GETFIELD and PUTFIELD
-                // TODO: INVOKEVIRTUAL and INVOKESPECIAL
+                opcode::GETFIELD => {
+                    let index = self.read_u16();
+                    if let Some(ConstantPoolEntry::FieldRef(ref symref)) =
+                        self.class.get_constant_pool()[index] {
+                        match pop!() {
+                            Value::Reference(object) => {
+                                let value = object.borrow().get_field(&symref.sig);
+                                push!(value);
+                            }
+                            v => panic!("TODO: Some kind of implementation for this: {:?}", v),
+                        }
+                    } else {
+                        panic!("GETFIELD {} must point to a FieldRef", index);
+                    }
+                }
+                opcode::PUTFIELD => {
+                    let index = self.read_u16();
+                    if let Some(ConstantPoolEntry::FieldRef(ref symref)) =
+                        self.class.get_constant_pool()[index] {
+                        let value = pop!();
+                        match pop!() {
+                            Value::Reference(object) => {
+                                object.borrow_mut().put_field(symref.sig.clone(), value);
+                            }
+                            v => panic!("TODO: Some kind of implementation for this: {:?}", v),
+                        }
+                    } else {
+                        panic!("PUTFIELD {} must point to a FieldRef", index);
+                    }
+                }
+                opcode::INVOKEVIRTUAL => {
+                    // TODO: Polymorphic invokevirtual
+                    let index = self.read_u16();
+                    if let Some(ConstantPoolEntry::MethodRef(ref symref)) =
+                        self.class.get_constant_pool()[index] {
+                        let num_args = symref.sig.params.len();
+                        let args = self.pop_count(num_args + 1); // include objectref
+
+                        let owning_class = class_loader.resolve_class(&symref.class.sig);
+                        let method = owning_class.find_method(class_loader, symref);
+
+                        let result = method.borrow()
+                            .invoke(owning_class.as_ref(), class_loader, Some(args));
+                        match result {
+                            None => (),
+                            Some(value) => push!(value),
+                        }
+                    } else {
+                        panic!("invokevirtual must refer to a MethodRef");
+                    }
+                }
+                opcode::INVOKESPECIAL => {
+                    let index = self.read_u16();
+                    if let Some(ConstantPoolEntry::MethodRef(ref symref)) =
+                        self.class.get_constant_pool()[index] {
+                        let num_args = symref.sig.params.len();
+                        let args = self.pop_count(num_args + 1); // include objectref
+
+                        let owning_class = class_loader.resolve_class(&symref.class.sig);
+                        let method = owning_class.find_method(class_loader, symref);
+
+                        let result = method.borrow()
+                            .invoke(owning_class.as_ref(), class_loader, Some(args));
+                        match result {
+                            None => (),
+                            Some(value) => push!(value),
+                        }
+                    } else {
+                        panic!("invokespecial must refer to a MethodRef");
+                    }
+                }
                 opcode::INVOKESTATIC => {
                     let index = self.read_u16();
                     if let Some(ConstantPoolEntry::MethodRef(ref symref)) =
                         self.class.get_constant_pool()[index] {
-                        // TODO: resolve class of method and get method from that class
                         let owning_class = class_loader.resolve_class(&symref.class.sig);
                         let method = owning_class.find_method(class_loader, symref);
                         let num_args = symref.sig.params.len();
                         let args = self.pop_count(num_args);
-                        // TODO: Remove this
-                        if symref.sig.name == "println" {
-                            println!("{:?}", args);
-                        } else {
-                            let result =
-                                method.invoke(owning_class.as_ref(), class_loader, Some(args));
-                            match result {
-                                None => (),
-                                Some(value) => self.operand_stack.push(value),
-                            }
+
+                        let result = method.borrow()
+                            .invoke(owning_class.as_ref(), class_loader, Some(args));
+                        match result {
+                            None => (),
+                            Some(value) => push!(value),
                         }
                     } else {
                         panic!("invokestatic must refer to a MethodRef");
                     }
                 }
                 // TODO: A bunch of stuff
+                opcode::NEW => {
+                    let index = self.read_u16();
+                    if let Some(ConstantPoolEntry::ClassRef(ref symref)) =
+                        self.class.get_constant_pool()[index] {
+                        let class = class_loader.resolve_class(&symref.sig);
+                        push!(Value::Reference(Rc::new(RefCell::new(value::Scalar::new(class)))));
+                    } else {
+                        panic!("new must refer to a ClassRef");
+                    }
+                }
                 opcode::NEWARRAY => {
                     let atype = match self.read_u8() {
                         4 => sig::Type::Boolean,
@@ -872,9 +952,13 @@ impl<'a> Frame<'a> {
                     let array = value::Array::new(class, count);
                     push!(Value::ArrayReference(Rc::new(RefCell::new(array))));
                 }
-                _ => {
-                    println!("{:#?}", self);
-                    panic!("Unknown instruction at pc {}", self.pc);
+                opcode::ARRAYLENGTH => {
+                    let array_ref = pop!(Value::ArrayReference);
+                    push!(Value::Int(Wrapping(array_ref.borrow().len())));
+                }
+                ins => {
+                    println!("{:#?}", self.class);
+                    panic!("Unknown instruction at pc {}: {:X}", self.pc, ins);
                 }
             }
         }

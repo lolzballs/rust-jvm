@@ -6,18 +6,18 @@ use super::{Attribute, Constant};
 
 use byteorder::{BigEndian, ReadBytesExt};
 
-const ACC_PUBLIC: u16 = 0x0001;
-const ACC_PRIVATE: u16 = 0x0002;
-const ACC_PROTECTED: u16 = 0x0004;
-const ACC_STATIC: u16 = 0x0008;
-const ACC_FINAL: u16 = 0x0010;
-const ACC_SYNCHRONIZED: u16 = 0x0020;
-const ACC_BRIDGE: u16 = 0x0040;
-const ACC_VARARGS: u16 = 0x0080;
-const ACC_NATIVE: u16 = 0x0100;
-const ACC_ABSTRACT: u16 = 0x0400;
-const ACC_STRICT: u16 = 0x0800;
-const ACC_SYNTHETIC: u16 = 0x1000;
+pub const ACC_PUBLIC: u16 = 0x0001;
+pub const ACC_PRIVATE: u16 = 0x0002;
+pub const ACC_PROTECTED: u16 = 0x0004;
+pub const ACC_STATIC: u16 = 0x0008;
+pub const ACC_FINAL: u16 = 0x0010;
+pub const ACC_SYNCHRONIZED: u16 = 0x0020;
+pub const ACC_BRIDGE: u16 = 0x0040;
+pub const ACC_VARARGS: u16 = 0x0080;
+pub const ACC_NATIVE: u16 = 0x0100;
+pub const ACC_ABSTRACT: u16 = 0x0400;
+pub const ACC_STRICT: u16 = 0x0800;
+pub const ACC_SYNTHETIC: u16 = 0x1000;
 
 /// The `Method` type represents a method_info, which describes a method.
 #[derive(Debug)]

@@ -1,0 +1,11 @@
+[package]
+name = "rjni_runtime"
+version = "0.1.0"
+authors = ["Benjamin Cheng <ben@bcheng.cf>"]
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+libc = "0.2"
+rust_jvm = { path = "../" }

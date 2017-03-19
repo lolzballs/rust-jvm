@@ -2,13 +2,17 @@ use super::class_loader::ClassLoader;
 use super::sig;
 use super::symref;
 
+use std::path::PathBuf;
+
 pub struct Runtime {
     bootstrap_class_loader: ClassLoader,
 }
 
 impl Runtime {
-    pub fn new() -> Self {
-        Runtime { bootstrap_class_loader: ClassLoader::new() }
+    pub fn new(class_paths: Vec<PathBuf>) -> Self {
+        let mut class_loader = ClassLoader::new(class_paths);
+        class_loader.load_library("./target/debug/librjni_runtime.so");
+        Runtime { bootstrap_class_loader: class_loader }
     }
 
     pub fn start(mut self, main_class: symref::Class) {
@@ -26,7 +30,7 @@ impl Runtime {
             class: class.symref.clone(),
             sig: main_sig,
         };
-        let method = class.find_method(&mut self.bootstrap_class_loader, &main_symref);
+        let method = class.find_method(&mut self.bootstrap_class_loader, &main_symref).borrow();
         method.invoke(&class, &mut self.bootstrap_class_loader, None);
     }
 }

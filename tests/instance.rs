@@ -11,12 +11,12 @@ use rust_jvm::vm::value::Value;
 const RUNTIME_PATH: &'static str = concat!(env!("OUT_DIR"), "/runtime");
 
 #[test]
-fn test_fibonacci() {
-    let mut class_loader = ClassLoader::new(vec!["test_data/array".into(), RUNTIME_PATH.into()]);
-    let class = class_loader.resolve_class(&sig::Class::Scalar(String::from("Fib")));
+fn test_instance() {
+    let mut class_loader = ClassLoader::new(vec!["test_data/instance".into(), RUNTIME_PATH.into()]);
+    let class = class_loader.resolve_class(&sig::Class::Scalar(String::from("Instance")));
 
     let sig = sig::Method {
-        name: String::from("fib"),
+        name: String::from("setAndGetValue"),
         params: vec![sig::Type::Int],
         return_type: Some(sig::Type::Int),
     };
@@ -28,10 +28,10 @@ fn test_fibonacci() {
 
     let method = class.find_method(&mut class_loader, &symref).borrow();
     let mut args = vec![];
-    args.push(Value::Int(Wrapping(10)));
+    args.push(Value::Int(Wrapping(69)));
     let ret = method.invoke(&class, &mut class_loader, Some(args)).unwrap();
     match ret {
-        Value::Int(value) => assert_eq!(value.0, 55),
-        _ => panic!("Expected Int with value 55, got {:?}", ret),
+        Value::Int(value) => assert_eq!(value.0, 69),
+        _ => panic!("Expected Int with value 69, got {:?}", ret),
     }
 }

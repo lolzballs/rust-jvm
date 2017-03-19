@@ -1,3 +1,4 @@
+use std::fmt;
 use std::num::Wrapping;
 use super::value::Value;
 
@@ -77,6 +78,15 @@ impl Class {
     }
 }
 
+impl fmt::Display for Class {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Class::Scalar(ref string) => write!(f, "{}", string),
+            Class::Array(_) => Err(fmt::Error),
+        }
+    }
+}
+
 #[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub struct Method {
     pub name: String,
@@ -117,10 +127,16 @@ impl Method {
     }
 }
 
+impl fmt::Display for Method {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.name.replace("/", "."))
+    }
+}
+
 #[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub struct Field {
-    name: String,
-    ty: Type,
+    pub name: String,
+    pub ty: Type,
 }
 
 impl Field {
@@ -129,5 +145,11 @@ impl Field {
             name: name,
             ty: ty,
         }
+    }
+}
+
+impl fmt::Display for Field {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.name)
     }
 }

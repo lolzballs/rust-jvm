@@ -2,6 +2,14 @@
 name = "rust_jvm"
 version = "0.1.0"
 authors = ["Benjamin Cheng <ben@bcheng.cf>"]
+build = "build.rs"
+
+[workspace]
+members = ["librjni"]
 
 [dependencies]
 byteorder = "1.0"
+libloading = "0.3"
+
+[build-dependencies]
+glob = "0.2"
