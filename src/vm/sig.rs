@@ -2,6 +2,7 @@ use std::fmt;
 use std::num::Wrapping;
 use super::value::Value;
 
+/// An enum representing all possible JVM types
 #[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub enum Type {
     Char,
@@ -16,6 +17,8 @@ pub enum Type {
 }
 
 impl Type {
+    /// Create a new type based on a JVM type signature
+    /// (e.g. `Ljava/lang/String`).
     pub fn new(type_str: &str) -> Option<Self> {
         Self::new_partial(type_str).0
     }
@@ -49,6 +52,7 @@ impl Type {
         }
     }
 
+    /// Get the default value for a `Type`.
     pub fn get_default(&self) -> Value {
         match *self {
             Type::Byte | Type::Char | Type::Short | Type::Int | Type::Boolean => {
@@ -62,6 +66,7 @@ impl Type {
     }
 }
 
+/// An enum representing the signatures of two types of classes, a `Scalar` and an `Array`
 #[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub enum Class {
     Scalar(String),
@@ -69,6 +74,7 @@ pub enum Class {
 }
 
 impl Class {
+    /// Create a new `Class` from a JVM class signature.
     pub fn new(name: &str) -> Self {
         if name.starts_with('[') {
             Class::Array(Box::new(Type::new(name.split_at(1).1).unwrap()))
@@ -87,14 +93,19 @@ impl fmt::Display for Class {
     }
 }
 
+/// A representation of the signature of a method.
 #[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub struct Method {
+    /// The name of the method.
     pub name: String,
+    /// A list of parameters of the method.
     pub params: Vec<Type>,
+    /// The return type, `None` if `void`.
     pub return_type: Option<Type>,
 }
 
 impl Method {
+    /// Create a `Method` from the name and descriptor (in JVM signature format).
     pub fn new(name: String, descriptor: String) -> Self {
         if !descriptor.starts_with('(') {
             panic!("Invalid method descriptor");
@@ -133,13 +144,17 @@ impl fmt::Display for Method {
     }
 }
 
+/// A representation of the signature of a Field.
 #[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub struct Field {
+    /// The name of the method.
     pub name: String,
+    /// The type of this method.
     pub ty: Type,
 }
 
 impl Field {
+    /// Create a new field, of type `ty` and name `name`.
     pub fn new(name: String, ty: Type) -> Self {
         Field {
             name: name,
