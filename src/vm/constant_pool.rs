@@ -10,6 +10,7 @@ use super::sig;
 
 use model::info::Constant;
 
+/// An enum representing all Constant Pool types.
 #[derive(Debug)]
 pub enum ConstantPoolEntry {
     Literal(Value),
@@ -20,6 +21,8 @@ pub enum ConstantPoolEntry {
     UnresolvedString(u16),
 }
 
+/// A struct wrapping a Vector of `ConstantPoolEntry`s.
+/// Represents a JVM Runtime Constant Pool.
 #[derive(Debug)]
 pub struct ConstantPool {
     entries: Vec<Option<ConstantPoolEntry>>,
@@ -34,6 +37,8 @@ impl Index<u16> for ConstantPool {
 }
 
 impl ConstantPool {
+    /// Create a new `ConstantPool` from a `Box`ed array of
+    /// [`Constant`](../../model/info/constant/enum.Constant.html)s.
     pub fn new(constant_pool: &Box<[Constant]>) -> Self {
         let mut entries = vec![];
         for constant in constant_pool.iter() {
@@ -156,6 +161,12 @@ impl ConstantPool {
         }
     }
 
+    /// Retrieve a literal from the constant pool.
+    ///
+    /// * `index` - The 1-based index of the constant.
+    ///
+    /// # Panics
+    /// Panics if the entry at `index` is not a Literal or UnresolvedString.
     pub fn resolve_literal(&self, index: u16, class_loader: &mut ClassLoader) -> Value {
         match self.entries[(index - 1) as usize] {
             Some(ConstantPoolEntry::Literal(ref value)) => value.clone(),
@@ -214,6 +225,9 @@ impl ConstantPool {
         }
     }
 
+    /// Retrieve a UTF-8 String from the constant pool.
+    ///
+    /// * `index` - The 1-based index of the constant.
     pub fn lookup_utf8(&self, index: u16) -> &String {
         match self.entries[(index - 1) as usize] {
             Some(ConstantPoolEntry::StringValue(ref string)) => string,

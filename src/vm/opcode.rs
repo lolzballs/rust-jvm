@@ -1,3 +1,5 @@
+//! This is a list of all JVM opcodes in 1.8
+
 pub const NOP: u8 = 0x00;
 pub const ACONST_NULL: u8 = 0x01;
 pub const ICONST_M1: u8 = 0x02;
