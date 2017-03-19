@@ -1,6 +1,7 @@
 use std::fmt;
 use super::sig;
 
+/// A symbolic reference to a Class
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Class {
     pub sig: sig::Class,
@@ -12,6 +13,7 @@ impl fmt::Display for Class {
     }
 }
 
+/// A symbolic reference to a Method
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Method {
     pub class: Class,
@@ -24,6 +26,7 @@ impl fmt::Display for Method {
     }
 }
 
+/// A symbolic reference to a Field
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Field {
     pub class: Class,
