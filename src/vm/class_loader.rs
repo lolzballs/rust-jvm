@@ -15,7 +15,7 @@ use std::rc::Rc;
 
 #[derive(Debug)]
 pub struct ClassLoader {
-    runtime_path: PathBuf,
+    class_paths: Vec<PathBuf>,
     classes: HashMap<sig::Class, Rc<class::Class>>,
 
     natives: Vec<Rc<Library>>,
@@ -23,9 +23,9 @@ pub struct ClassLoader {
 }
 
 impl ClassLoader {
-    pub fn new(runtime_path: PathBuf) -> ClassLoader {
+    pub fn new(class_paths: Vec<PathBuf>) -> ClassLoader {
         ClassLoader {
-            runtime_path: runtime_path,
+            class_paths: class_paths,
             classes: HashMap::new(),
             natives: Vec::new(),
             unbound_natives: Vec::new(),
@@ -33,29 +33,25 @@ impl ClassLoader {
     }
 
     fn find_class_bytes(&self, name: &str) -> Result<Vec<u8>, &'static str> {
-        let path = PathBuf::from(String::from(name) + ".class");
-        if path.exists() {
-            File::open(path)
-                .and_then(|mut file| {
-                    let mut buf = Vec::new();
-                    try!(file.read_to_end(&mut buf));
-                    Ok(buf)
-                })
-                .or(Err("Could not load class"))
-        } else {
-            let rt_path = self.runtime_path.join(String::from(name) + ".class");
-            if rt_path.exists() {
-                File::open(rt_path)
+        for path in &self.class_paths {
+            let path = {
+                let mut path = path.clone();
+                path.push(name);
+                path.set_extension("class");
+                path
+            };
+
+            if path.exists() {
+                return File::open(path)
                     .and_then(|mut file| {
                         let mut buf = Vec::new();
-                        try!(file.read_to_end(&mut buf));
+                        file.read_to_end(&mut buf)?;
                         Ok(buf)
                     })
-                    .or(Err("Could not load class"))
-            } else {
-                Err("Class not found")
+                    .or(Err("Could not load class"));
             }
         }
+        Err("Class not found")
     }
 
     fn load_class_bytes(&mut self, sig: &sig::Class, bytes: Vec<u8>) -> Rc<class::Class> {
