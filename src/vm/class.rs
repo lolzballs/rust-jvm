@@ -13,10 +13,15 @@ use std::collections::{HashMap, HashSet};
 use std::cell::RefCell;
 use std::rc::Rc;
 
+/// A representation of a loaded class.
 #[derive(Debug)]
 pub struct Class {
+    /// A symbolic reference to the class.
     pub symref: symref::Class,
+    /// The access flags of this class.
     pub access_flags: u16,
+    /// The super class of the class.
+    /// If it is `java/lang/Object`, this is `None`.
     pub superclass: Option<Box<Class>>,
     constant_pool: ConstantPool,
     methods: HashMap<sig::Method, RefCell<Method>>,
@@ -26,6 +31,10 @@ pub struct Class {
 }
 
 impl Class {
+    /// Creates a new `Class` from its symbolic reference,
+    /// superclass, runtime constant pool, and class model.
+    ///
+    /// Returns the new class, as well as a vector of unbound native methods.
     pub fn new(symref: symref::Class,
                superclass: Option<Box<Class>>,
                constant_pool: ConstantPool,
@@ -81,6 +90,7 @@ impl Class {
          unbound_natives)
     }
 
+    /// Creates a new `Class` representing an array of type `component`.
     pub fn new_array(component: sig::Type) -> Self {
         // TODO: Length field, access flags
         let sig = sig::Class::Array(Box::new(component));
@@ -100,6 +110,7 @@ impl Class {
         }
     }
 
+    /// Initialize a `Class`, calling its `<clinit>` if necessary.
     pub fn initialize(&self, class_loader: &mut ClassLoader) {
         // Initialize all the field_values
         let run_clinit = match *self.field_values.borrow() {
@@ -107,7 +118,6 @@ impl Class {
             Some(_) => false,
         };
         if run_clinit {
-
             let mut field_values = HashMap::new();
             for (sig, index) in &self.field_constants {
                 let value = self.constant_pool.resolve_literal(*index, class_loader);
@@ -129,15 +139,21 @@ impl Class {
         }
     }
 
+    /// Bind `sig` to `library`.
+    ///
+    /// # Panics
+    /// Panics if `sig` isn't in `methods`, or if `sig` isn't a Native method.
     pub fn bind_native_method(&self, sig: sig::Method, library: Rc<Library>) {
         let mut method = self.methods.get(&sig).unwrap().borrow_mut();
         method.bind_native(library);
     }
 
+    /// Returns a reference to the runtime constant pool of this class.
     pub fn get_constant_pool(&self) -> &ConstantPool {
         &self.constant_pool
     }
 
+    /// Returns a set of all non-static fields of this class.
     pub fn collect_instance_fields(&self) -> HashSet<sig::Field> {
         // TODO: Superclass fields
         let mut fields = HashSet::new();
@@ -149,6 +165,10 @@ impl Class {
         fields
     }
 
+    /// Returns a reference to a `Method`, initializing the class if it hasn't been already.
+    ///
+    /// # Panics
+    /// Panics if `method_symref` isn't in `methods`.
     pub fn find_method(&self,
                        class_loader: &mut ClassLoader,
                        method_symref: &symref::Method)
@@ -163,6 +183,10 @@ impl Class {
             })
     }
 
+    /// Returns the `Value` of a field, initializing the class if it hasn't been already.
+    ///
+    /// # Panics
+    /// Panics if the field_symref isn't in `field_values`.
     pub fn get_field(&self, class_loader: &mut ClassLoader, field_symref: &symref::Field) -> Value {
         self.initialize(class_loader);
         let map_opt = self.field_values.borrow();
@@ -171,6 +195,7 @@ impl Class {
         // TODO: Superclass stuff
     }
 
+    /// Sets a field, initializing the class if it hasn't been already.
     pub fn put_field(&self,
                      class_loader: &mut ClassLoader,
                      field_symref: &symref::Field,
@@ -182,14 +207,18 @@ impl Class {
     }
 }
 
+/// A representation of a loaded method.
 #[derive(Debug)]
 pub struct Method {
+    /// A symbolic reference to the method.
     pub symref: symref::Method,
+    /// The access flags of the method.
     pub access_flags: u16,
     code: MethodCode,
 }
 
 impl Method {
+    /// Creates a new `Method`.
     pub fn new(symref: symref::Method, info: &model::info::Method) -> Self {
         let method_code = {
             if info.access_flags & model::info::method::ACC_NATIVE != 0 {
@@ -218,10 +247,25 @@ impl Method {
         }
     }
 
+    /// Bind to a native library.
+    ///
+    /// # Panics
+    /// Panics if the method is not a native, or is already bound.
     pub fn bind_native(&mut self, lib: Rc<Library>) {
-        self.code = MethodCode::Native(lib);
+        if let MethodCode::UnresolvedNative = self.code {
+            self.code = MethodCode::Native(lib);
+        } else {
+            panic!("Cannot bind a non-native method to a native method")
+        }
     }
 
+    /// Invoke the method.
+    ///
+    /// If the method is a Native method, invokes the native method.
+    /// If the method is a Java method, creates a new frame and invokes it.
+    ///
+    /// # Panics
+    /// Panics if the method is a Native method and is Unresolved.
     pub fn invoke(&self,
                   class: &Class,
                   class_loader: &mut ClassLoader,
@@ -251,9 +295,13 @@ impl Method {
     }
 }
 
+/// Represents the Method's code
 #[derive(Debug)]
 enum MethodCode {
+    /// A bound native method.
     Native(Rc<Library>),
+    /// An unbound native method.
     UnresolvedNative,
+    /// A java method
     Java { max_locals: u16, code: Box<[u8]> },
 }

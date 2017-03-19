@@ -13,16 +13,23 @@ use std::fs::File;
 use std::path::PathBuf;
 use std::rc::Rc;
 
+/// The `ClassLoader` is the main (currently only)
+/// class loader for the JVM.
 #[derive(Debug)]
 pub struct ClassLoader {
+    /// The paths which the ClassLoader will look for
     class_paths: Vec<PathBuf>,
+    /// The classes which have been loaded already
     classes: HashMap<sig::Class, Rc<class::Class>>,
 
+    /// The loaded native libraries
     natives: Vec<Rc<Library>>,
+    /// The native functions which have been loaded, but not bound to a library
     unbound_natives: Vec<symref::Method>,
 }
 
 impl ClassLoader {
+    /// Constructs a new `ClassLoader`, specifying directories in which to search for classes
     pub fn new(class_paths: Vec<PathBuf>) -> ClassLoader {
         ClassLoader {
             class_paths: class_paths,
@@ -96,12 +103,13 @@ impl ClassLoader {
         }
     }
 
+    /// Load a library located at `path`.
     pub fn load_library(&mut self, path: &str) {
         self.natives.push(Rc::new(native::load(path)));
         self.bind_native_methods();
     }
 
-    pub fn bind_native_methods(&mut self) {
+    fn bind_native_methods(&mut self) {
         let natives = self.natives.clone();
         let mut to_bind: HashMap<symref::Method, Rc<Library>> = HashMap::new();
         self.unbound_natives.retain(|method| {
@@ -120,6 +128,10 @@ impl ClassLoader {
         }
     }
 
+    /// Attempts to resolve `sig`.
+    ///
+    /// # Panics
+    /// Panics if the class cannot be resolved.
     pub fn resolve_class(&mut self, sig: &sig::Class) -> Rc<class::Class> {
         if let Some(class) = self.classes.get(&sig) {
             // the class has been resolved
