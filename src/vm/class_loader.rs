@@ -132,7 +132,8 @@ impl ClassLoader {
 
         match *sig {
             sig::Class::Scalar(ref name) => {
-                let class_bytes = self.find_class_bytes(name).unwrap();
+                let class_bytes = self.find_class_bytes(name)
+                    .expect(&format!("could not load class {}", name));
                 self.load_class_bytes(sig, class_bytes)
             }
             sig::Class::Array(ref component) => {
